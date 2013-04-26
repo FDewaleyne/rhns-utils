@@ -75,8 +75,9 @@ def select_channels(key):
     for channel in client.channel.listSoftwareChannels(key):
         ch = client.channel.software.getDetails(key,channel['label'])
         #does this have a checksum? if it's sha256 or md5sum let's process the channel
-        #let's first check that there is a checksum_label in there
-        if 'checksum_label' in ch and ch['checksum_label'] in ('sha256','md5sum','sha1','sha512'):
+        #let's first check that there is a checksum_label in there 
+        #TODO : check if the return for "none" is None or "" and check against that rather than having a hard list of checksum types
+        if 'checksum_label' in ch and ch['checksum_label'] in ('sha256','md5sum','sha1','sha512', 'sha384'):
             channels.append(ch['label'])
         elif not 'checksum_label' in ch:
             print('label '+ch['label']+' does not have a checksum attached')
