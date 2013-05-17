@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-#version 0.5
+#version 0.6
 
 #dumps the consumption of the satellite along with how many subscriptions are unused but assgned to a custom channel
 #confirmed to work for 5.4, should work with 5.3, will not work with 5.2.
@@ -12,8 +12,9 @@
 # V0.3 by FDewaleyne - 19-10-2012 - changing to allow more features that will gradually be built in
 # V0.4 by FDewaleyne - 03-01-2013 - merged the code that lists entitlements with this script, minor display fixes
 # V0.5 by FDewaleyne - 22-01-2013 - altered a bit the output and fixed listing options to not display the consumption when used
+# V0.6 by FDewaleyne - 17-05-2013 - replaced error tracking, updated test for the flex entitlements
 
-import xmlrpclib, os, ConfigParser, warnings
+import xmlrpclib, os, ConfigParser
 
 #global variables
 client=None;
@@ -70,7 +71,7 @@ def general_consumption(key):
         try:
             print("%44s %8s %9s %11s %6s" % (entry['label'], str(entry['unallocated']+entry['allocated']), str(entry['allocated']), str(entry['unallocated']),  str(entry['free'])))
         except:
-            warnings.warn("error handling "+entry['label']+" aka "+entry['name']+", skipping")
+            sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping\n")
             continue
     print("\n")
     print("%s" % ("[================================[software   entitlements]================================]"))
@@ -80,11 +81,11 @@ def general_consumption(key):
     for entry in client.org.listSoftwareEntitlements(key):
         try:
             print("%44s %6s %8s %9s %11s %6s" % (entry['label'], "", str(entry['unallocated']+entry['allocated']), str(entry['allocated']), str(entry['unallocated']),  str(entry['free'])))
-            if entry['used_flex'] or entry['free_flex']:
+            if 'used_flex' in entry and 'free_flex' in entry:
                 # only print flex entries if they exist
                 print("%44s %6s %8s %9s %11s %6s" % (entry['label'], " Flex ", str(entry['unallocated_flex']+entry['allocated_flex']), str(entry['allocated_flex']), str(entry['unallocated_flex']),  str(entry['free_flex'])))
         except:
-            warnings.warn("error handling "+entry['label']+" aka "+entry['name']+", skipping.")
+            sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.\n")
             continue
 
 
@@ -99,7 +100,7 @@ def list_entitlements(key):
         try:
             print("%44s %s %s" % (entry['label'], "|", entry['name']))
         except:
-            warnings.warn("error handling "+entry['label']+" aka "+entry['name']+", skipping")
+            sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping\n")
             continue
     print("\n")
     print("%s" % ("[================================[software   entitlements]================================]"))
@@ -112,7 +113,7 @@ def list_entitlements(key):
             #    # only print flex entries if they exist
             #    print("%44s %6s %8s %9s %11s %6s" % (entry['label'], " Flex ", str(entry['unallocated_flex']+entry['allocated_flex']), str(entry['allocated_flex']), str(entry['unallocated_flex']),  str(entry['free_flex'])))
         except:
-            warnings.warn("error handling "+entry['label']+" aka "+entry['name']+", skipping.")
+            sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.")
             continue
 
 
