@@ -1,0 +1,3 @@
+[submodule "regen-repodata"]
+	path = regen-repodata
+	url = git://github.com/FDewaleyne/regen-repodata.git
