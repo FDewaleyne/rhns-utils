@@ -65,11 +65,11 @@ def general_consumption(key):
     global client;
     print("\n")
     print("%s" % ("[=================================[system  entitlements]===========================]"))
-    print("%44s %s %s %s %s" % ("Entitlement Label", "   Total  ", "Allocated", "Unallocated", "Unused"))
-    print("%44s %s %s %s %s" % ("-----------------", "----------", "---------", "-----------", "------"))
+    print("%44s %s %s %s %s %s" % ("Entitlement Label", "   Total  ", " Used ", "Allocated", "Unallocated", "Unused"))
+    print("%44s %s %s %s %s %s" % ("-----------------", "----------", "------", "---------", "-----------", "------"))
     for entry in client.org.listSystemEntitlements(key):
         try:
-            print("%44s %8s %9s %11s %6s" % (entry['label'], str(entry['unallocated']+entry['allocated']), str(entry['allocated']), str(entry['unallocated']),  str(entry['free'])))
+            print("%44s %8s %9s %11s %6s" % (entry['label'], str(entry['unallocated']+entry['allocated']), str(entry['used']), str(entry['allocated']), str(entry['unallocated']),  str(entry['free'])))
         except:
             sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping\n")
             continue
