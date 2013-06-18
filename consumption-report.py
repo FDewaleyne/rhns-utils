@@ -75,8 +75,8 @@ def general_consumption(key):
             continue
     print("\n")
     print("%s" % ("[================================[software   entitlements]================================]"))
-    print("%44s %s %s %s %s %s" % ("Entitlement Label"," Flex ", "   Total  ", " Used ", "Allocated", "Unallocated", "Unused"))
-    print("%44s %s %s %s %s %s" % ("-----------------","------", "----------", "------", "---------", "-----------", "------"))
+    print("%44s %s %s %s %s %s %s" % ("Entitlement Label"," Flex ", "   Total  ", " Used ", "Allocated", "Unallocated", "Unused"))
+    print("%44s %s %s %s %s %s %s" % ("-----------------","------", "----------", "------", "---------", "-----------", "------"))
     for entry in client.org.listSoftwareEntitlements(key):
         try:
             print("%44s %6s %8s %6s %9s %11s %6s" % (entry['label'], "", str(entry['unallocated']+entry['allocated']), str(entry['used']) ,str(entry['allocated']), str(entry['unallocated']),  str(entry['free'])))
