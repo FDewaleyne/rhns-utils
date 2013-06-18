@@ -69,21 +69,20 @@ def general_consumption(key):
     print("%44s %s %s %s %s %s" % ("-----------------", "----------", "------", "---------", "-----------", "------"))
     for entry in client.org.listSystemEntitlements(key):
         try:
-            print("%44s %8s %9s %11s %6s" % (entry['label'], str(entry['unallocated']+entry['allocated']), str(entry['used']), str(entry['allocated']), str(entry['unallocated']),  str(entry['free'])))
+            print("%44s %8s %6s %9s %11s %6s" % (entry['label'], str(entry['unallocated']+entry['allocated']), str(entry['used']), str(entry['allocated']), str(entry['unallocated']),  str(entry['free'])))
         except:
             sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping\n")
             continue
     print("\n")
     print("%s" % ("[================================[software   entitlements]================================]"))
-    print("%44s %s %s %s %s %s" % ("Entitlement Label"," Flex ", "   Total  ", "Allocated", "Unallocated", "Unused"))
-    print("%44s %s %s %s %s %s" % ("-----------------","------", "----------", "---------", "-----------", "------"))
-    print "second line is for the flex values"
+    print("%44s %s %s %s %s %s" % ("Entitlement Label"," Flex ", "   Total  ", " Used ", "Allocated", "Unallocated", "Unused"))
+    print("%44s %s %s %s %s %s" % ("-----------------","------", "----------", "------", "---------", "-----------", "------"))
     for entry in client.org.listSoftwareEntitlements(key):
         try:
-            print("%44s %6s %8s %9s %11s %6s" % (entry['label'], "", str(entry['unallocated']+entry['allocated']), str(entry['allocated']), str(entry['unallocated']),  str(entry['free'])))
+            print("%44s %6s %8s %6s %9s %11s %6s" % (entry['label'], "", str(entry['unallocated']+entry['allocated']), str(entry['used']) ,str(entry['allocated']), str(entry['unallocated']),  str(entry['free'])))
             if 'used_flex' in entry and 'free_flex' in entry:
                 # only print flex entries if they exist
-                print("%44s %6s %8s %9s %11s %6s" % (entry['label'], " Flex ", str(entry['unallocated_flex']+entry['allocated_flex']), str(entry['allocated_flex']), str(entry['unallocated_flex']),  str(entry['free_flex'])))
+                print("%44s %6s %8s %6s %9s %11s %6s" % (entry['label'], " Flex ", str(entry['unallocated_flex']+entry['allocated_flex']), str(entry['used_flex']) ,str(entry['allocated_flex']), str(entry['unallocated_flex']),  str(entry['free_flex'])))
         except:
             sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.\n")
             continue
