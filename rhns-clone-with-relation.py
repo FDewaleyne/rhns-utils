@@ -3,7 +3,8 @@
 ##
 # tool that copies a channel, creating a new channel with set relationship
 ##
-
+# requires python 2.6
+##
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
@@ -17,8 +18,9 @@ __status__ = "dev"
 import xmlrpclib, warnings, re
 
 #connector class -used to initiate a connection to a satellite and to send the proper satellite the proper commands
-class RHNSConnection:
+class RHNSConnection(object):
 
+    #TODO: implement properties
     username = None
     host = None
     key = None
@@ -46,8 +48,9 @@ class RHNSConnection:
             self.client.auth.logout(self.key)
         pass
 
-class RHNSPackage:
+class RHNSPackage(object):
 
+    #TODO : convert to properties
     id = None
     name = None
     version = None
@@ -72,55 +75,196 @@ class RHNSPackage:
         pass
 
 
-class RHNSChannel:
+class RHNSChannel(object):
 
-    label = None
-    name = None
-    arch = None
-    description = None
-    erratas = {}
-    packages = {}
-    systems = {}
-    original = None
-    parent = None
-    children = {}
-    checksum_label = None
-    new_channel = False
+    # the objects and their values
+    __new_channel = True #true means the channel hasn't been saved into the db. Set to False later
+    __connection #contains the connection used to create the object. 
+    _label = None
+    _name = None
+    _arch = None
+    _description = None
+    _summary = None
+    _erratas = {}
+    _packages = {}
+    _systems = {}
+    _original = None
+    _parent = None
+    _children = {}
+    _checksum_label = None
+
+    ###
+    # properties
+    ###
+
+    #l abel property
+    @property
+    def label(self):
+        return self._label
+
+    @label.setter
+    def label(self, value):
+        if self.__new_channel:
+            self._label = value
+        else:
+            print "cannot change the label on a channel already created"
+    
+    # name property
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self):
+        self._name = value
+        # name can be updated after creation of the channel
+        if not __new_channel:
+            self.__update_details
+
+    # arch property (arch_name or arch_label depending which parts of the api)
+    @property
+    def arch(self):
+        return self._arch
+
+    @arch.setter
+    def arch(self,value):
+        if self.__new_channel:
+            self._arch = value
+        else:
+            print "cannot change the arch on a channel already created"
+
+    # description property
+    @property
+    def description(self):
+        return self._description
+
+    @description.setter
+    def description(self,value):
+        self._description = value
+        #this setting can be written to the db if this is an existing channel
+        if not __new_channel:
+            self.__update_details()
+            
+    # summary property
+    @property
+    def summary(self):
+        return self._summary
+
+    @description.setter
+    def summary(self,value):
+        self._summary = value
+        #this setting can be written to the db if this is an existing channel
+        if not __new_channel:
+            self.__update_details()
+
+    #original property (clone relation)
+    @property
+    def original(self):
+        return self._original
+
+    @original.setter
+    def original(self,value):
+        if self.__new_channel:
+            self._original = value
+        else:
+            print "cannot change the clone relation on a channel already created"
+
+
+    #parent property (channel relation)
+    @property
+    def parent(self):
+        return self._parent
+
+    @parent.setter
+    def parent(self,value):
+        if self.__new_channel:
+            self._parent = value
+        else:
+            print "cannot change the parent relation on a channel already created"
+
+    #label property
+    @property
+    def checksum_label(self):
+        return self._checksum_label
+
+    @checksum_label.setter
+    def checksum_label(self,value):
+        self._checksum_label = value
+        if self.__update_channel:
+            self.__update_details()
+
+    #the dictionaries
+
+    # children property ; this shouldn't be set.
+    @property
+    def children(self):
+        return self._children
+   
+    #TODO: add property to refresh the children
+
+
+    # packages handling
+    @property
+    def packages(self):
+        return self._packages
+    #TODO : add property to refresh the packages
+    #TODO : add property to add a package to channel from package object.
+
+    # systems handling
+    @property
+    def systems(self):
+        return self._systems
+
+    #TODO : add property to refresh the systems
+    #TODO : add property to add systems to the channel
+
+    # errata handling
+    @property
+    def erratas(self):
+        return self._erratas
+    #TODO : add a lot more properties to errata to handle operations
+
+
 
     def __init__(self, connection, label, source == None):
         """populates the object with the data from the channel"""
+        #TODO: come back and update this, not sure is proper
+        __connection = connection
         if isinstance(source, RHNSChannel):
             #code to create an object from the details
-            self.label = label
-            self.name = source.name
-            self.description = source.description
+            self._label = label
+            self._name = source.name
+            self._description = source.description
+            self._summary = source.summary
             #the rest needs to relatively stay the same
-            self.arch = source.arch
-            self.erratas = source.erratas
-            self.parent = source.parent
-            self.original = source.original
-            self.checksum_label = source.checksum_label
-            self.systems = source.systems
-            self.children = source.children
-            self.original = source.original
-            self.systems = source.systems
-            self.new_channel = True
+            self._arch = source.arch
+            self._erratas = source.erratas
+            self._parent = source.parent
+            self._original = source.original
+            self._checksum_label = source.checksum_label
+            self._systems = source.systems
+            self._children = source.children
+            self._original = source.original
+            self._systems = source.systems
+            self.__new_channel = True
         else
             # create the object by fetching it piece by piece
-            self.label = label
+            self._label = label
             infos = connection.channel.software.getDetails(connection.key, self.label)
-            self.name = infos['name']
-            self.arch = infos['arch_name']
-            self.description = infos['description']
-            self.parent = infos['parent_channel_label']
-            self.original = infos['clone_original']
-            self.checksum_label = infos['checksum_label']
-            self.__populate_children(connection)
-            self.__populate_packages(connection)
-            self.__populate_systems(connection)
+            self._name = infos['name']
+            self._arch = infos['arch_name']
+            self._description = infos['description']
+            self._summary = infos['summary']
+            self._parent = infos['parent_channel_label']
+            self._original = infos['clone_original']
+            self._checksum_label = infos['checksum_label']
+            self.__populate_children()
+            self.__populate_packages()
+            self.__populate_systems()
+            self.__new_channel = False
         pass
 
-    def create(self, connection):
+    def create(self):
         """creates the object from all the settings the object was created with"""
         if self.new_channel :
             #code
@@ -130,37 +274,23 @@ class RHNSChannel:
             print "ignoring order to create a channel - this channel already exists"
         pass
 
-    def set_parent(self, label):
-        """setter for a parent"""
-        if self.new_channel :
-            self.parent = label
-        else:
-            #TODO : replace with proper exception
-            print "ignoring setter call - can't be edited after channel is created"
-        pass
+    def __update_defailt(self)
 
-    def set_original_relationa(self, label):
-        """setter for the original this channel should be a clone of"""
-        if self.new_channel :
-            self.original = label
-        else:
-            #TODO : replace with proper exception
-            print "ignoring setter call - can't be edited after channel is created"
-        pass
 
-    def __populate_subscribed_machines(self, connection):
+    def __populate_subscribed_machines(self):
         """populates the list of subscribed machines (ids subscrubed to that channel)"""
         for system in connection.client.channel.listSubscribedSystems(connection.key, self.label):
             self.systems[system['id']] = system['name']
         pass
 
-    def __populate_packages(self, connection):
+    def __populate_packages(self):
         """populates the list of packages """
-        for package in connection.client.channel.software.listAllPackages(key, self.label):
+        for package in self.__connection.client.channel.software.listAllPackages(key, self.label):
+            #TODO : confirm syntax is correct
             self.packages[package[id]] = RHNSPackge(package)
         pass
 
-    def __populate_children(self, connection):
+    def __populate_children(self):
         """populates the list of child channels one by one"""
         for channel in connection.client.channel.software.listChildren(connection.key, self.label):
             self.children[channel['label']] = RHNSChannel(connection, channel['label'])
@@ -168,7 +298,7 @@ class RHNSChannel:
 
     def __find_erratas(self, connection):
         """finds the erratas of the parent channel that are associated with the packages listed in the channel."""
-        #TODO : work on this later
+        #TODO : work on this later (find all erratas in the original, go through all erratas and find the ones that have packages in the channel, then clone these in the channel)
         pass
 
 
