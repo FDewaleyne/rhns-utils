@@ -46,37 +46,105 @@ class RHNSConnection:
             self.client.auth.logout(self.key)
         pass
 
+class RHNSPackage:
+
+    id = None
+    name = None
+    version = None
+    release = None
+    epoch = None
+    arch = None
+    checksum = None
+    checksum_type = None
+    last_modified_date = None
+
+    def __init__(self, infos = {}):
+        """creates an object from all the info stored"""
+        self.id = infos['id']
+        self.name = infos['name']
+        self.version = infos['version']
+        self.release = infos['release']
+        self.epoch = infos['epoch']
+        self.arch = infos['arch_label']
+        self.checksum = infos['checksum']
+        self.checksum_type = infos['checksum_type']
+        self.last_modified_date = infos['last_modified_date']
+        pass
+
 
 class RHNSChannel:
 
     label = None
     name = None
+    arch = None
     description = None
     erratas = {}
     packages = {}
     systems = {}
     original = None
     parent = None
-    childs = []
+    children = {}
+    checksum_label = None
+    new_channel = False
 
-    def __init__(self, connection, details={}):
+    def __init__(self, connection, details):
         """populates the object with the data from the channel"""
-        if details['label'] == None:
+        if isinstance(details, dict):
             #code to create an object from the details
+            self.label = details['label']
+            self.name = details['name']
+            self.arch = details['arch']
+            self.description = details['description']
+            self.parent = details['parent']
+            self.original = details['original']
+            self.checksum_label = details['checksum_label']
+            self.new_channel = True
         else
             # create the object by fetching it piece by piece
+            self.label = details
+            infos = connection.channel.software.getDetails(connection.key, self.label)
+            self.name = infos['name']
+            self.arch = infos['arch_name']
+            self.description = infos['description']
+            self.parent = infos['parent_channel_label']
+            self.original = infos['clone_original']
+            self.checksum_label = infos['checksum_label']
         pass
 
     def create(self, connection):
         """creates the object from all the settings the object was created with"""
+        if self.new_channel :
+            #code
+            #close changes
+            self.new_channel = False
+        else:
+            print "ignoring order to create a channel - this channel already exists"
+        pass
+
+    def set_parent(self, label):
+        """setter for a parent"""
+        if self.new_channel :
+            self.parent = label
+        else:
+            print "ignoring setter call - can't be edited after channel is saved"
         pass
 
     def __fetch_subscribed_machines(self, connection):
         """populates the list of subscribed machines (ids subscrubed to that channel)"""
+        for system in connection.client.channel.listSubscribedSystems(connection.key, self.label):
+            self.systems[system['id']] = system['name']
         pass
 
     def __fetch_packages(self, connection):
         """populates the list of packages """
+        for package in connection.client.channel.software.listAllPackages(key, self.label):
+            self.packages[package[id]] = RHNSPackge(package)
+        pass
+
+    def __fetch_children(self, connection):
+        """populates the list of child channels one by one"""
+        for channel in connection.client.channel.software.listChildren(connection.key, self.label):
+            self.children[channel['label']] = RHNSChannel(connection, channel['label'])
         pass
 
     def __find_erratas(self, connection):
