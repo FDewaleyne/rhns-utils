@@ -15,7 +15,7 @@ __status__ = "dev"
 
 # copies a configuration channel from one satellite to another
 
-import xmlrpclib, warnings, re
+import xmlrpclib, re
 
 #connector class -used to initiate a connection to a satellite and to send the proper satellite the proper commands
 class RHNSConnection(object):
