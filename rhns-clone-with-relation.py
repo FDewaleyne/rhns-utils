@@ -87,21 +87,27 @@ class RHNSChannel:
     checksum_label = None
     new_channel = False
 
-    def __init__(self, connection, details):
+    def __init__(self, connection, label, source == None):
         """populates the object with the data from the channel"""
-        if isinstance(details, dict):
+        if isinstance(source, RHNSChannel):
             #code to create an object from the details
-            self.label = details['label']
-            self.name = details['name']
-            self.arch = details['arch']
-            self.description = details['description']
-            self.parent = details['parent']
-            self.original = details['original']
-            self.checksum_label = details['checksum_label']
+            self.label = label
+            self.name = source.name
+            self.description = source.description
+            #the rest needs to relatively stay the same
+            self.arch = source.arch
+            self.erratas = source.erratas
+            self.parent = source.parent
+            self.original = source.original
+            self.checksum_label = source.checksum_label
+            self.systems = source.systems
+            self.children = source.children
+            self.original = source.original
+            self.systems = source.systems
             self.new_channel = True
         else
             # create the object by fetching it piece by piece
-            self.label = details
+            self.label = label
             infos = connection.channel.software.getDetails(connection.key, self.label)
             self.name = infos['name']
             self.arch = infos['arch_name']
@@ -109,6 +115,9 @@ class RHNSChannel:
             self.parent = infos['parent_channel_label']
             self.original = infos['clone_original']
             self.checksum_label = infos['checksum_label']
+            self.__populate_children(connection)
+            self.__populate_packages(connection)
+            self.__populate_systems(connection)
         pass
 
     def create(self, connection):
@@ -126,22 +135,32 @@ class RHNSChannel:
         if self.new_channel :
             self.parent = label
         else:
-            print "ignoring setter call - can't be edited after channel is saved"
+            #TODO : replace with proper exception
+            print "ignoring setter call - can't be edited after channel is created"
         pass
 
-    def __fetch_subscribed_machines(self, connection):
+    def set_original_relationa(self, label):
+        """setter for the original this channel should be a clone of"""
+        if self.new_channel :
+            self.original = label
+        else:
+            #TODO : replace with proper exception
+            print "ignoring setter call - can't be edited after channel is created"
+        pass
+
+    def __populate_subscribed_machines(self, connection):
         """populates the list of subscribed machines (ids subscrubed to that channel)"""
         for system in connection.client.channel.listSubscribedSystems(connection.key, self.label):
             self.systems[system['id']] = system['name']
         pass
 
-    def __fetch_packages(self, connection):
+    def __populate_packages(self, connection):
         """populates the list of packages """
         for package in connection.client.channel.software.listAllPackages(key, self.label):
             self.packages[package[id]] = RHNSPackge(package)
         pass
 
-    def __fetch_children(self, connection):
+    def __populate_children(self, connection):
         """populates the list of child channels one by one"""
         for channel in connection.client.channel.software.listChildren(connection.key, self.label):
             self.children[channel['label']] = RHNSChannel(connection, channel['label'])
@@ -149,6 +168,7 @@ class RHNSChannel:
 
     def __find_erratas(self, connection):
         """finds the erratas of the parent channel that are associated with the packages listed in the channel."""
+        #TODO : work on this later
         pass
 
 
