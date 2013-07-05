@@ -18,7 +18,7 @@ __status__ = "dev"
 import xmlrpclib, re
 
 #connector class -used to initiate a connection to a satellite and to send the proper satellite the proper commands
-class RHNSConnection(object):
+class RHNSConnection:
 
     #TODO: implement properties
     username = None
@@ -48,20 +48,9 @@ class RHNSConnection(object):
             self.client.auth.logout(self.key)
         pass
 
-class RHNSPackage(object):
+class RHNSPackage:
 
-    #TODO : convert to properties
-    id = None
-    name = None
-    version = None
-    release = None
-    epoch = None
-    arch = None
-    checksum = None
-    checksum_type = None
-    last_modified_date = None
-
-    def __init__(self, infos = {}):
+    def __init__(self, infos):
         """creates an object from all the info stored"""
         self.id = infos['id']
         self.name = infos['name']
@@ -75,23 +64,93 @@ class RHNSPackage(object):
         pass
 
 
+class RHNSErrata(object):
+
+
+    @property
+    def advisory_name(self):
+        return self._advisory_name
+
+    @property
+    def advisory_synopsis(self):
+        return self._advisory_synopsis
+
+    @property
+    def advisory_type(self):
+        return self._advisory_type
+
+    @property
+    def issue_date(self):
+        return self._issue_date
+
+    @property
+    def update_date(self):
+        return self._update_date
+
+    @property
+    def packages(self):
+        return self._packages
+        
+    def __init__(self, connection, source):
+        """creates the errata object"""
+        #source sould be the same as the information present from the channel. it should otherwise be an errata name, and then will be looked up
+        if type ( source ) == str:
+            advisory_info = connection.client.errata.getDetails(connection.key, source)
+            self._advisory_name = source
+            self._advisory_synopsis = advisory_info['synopsis']
+            self._advisory_type = advisory_info['type']
+            self._issue_date = advisory_info['issue_date']
+            self._update_date = advisory_info['update_date']
+        elif type ( source ) == dict:
+            #would only have elements id, date, update_date, advisory_synopsis, advisory_type, advisory_name
+            self._advisory_name = source['advisory_name']
+            self._advisory_synopsis = source['advisory_synopsis']
+            self._avisory_type = source['advisory_type']
+            self._issue_date = source['date']
+            self._update_date = source['update_date']
+        else:
+            pass #TODO replace with raising an exception here
+        #TODO : this is going to need an update.
+        self._packages = {}
+        for apackage in connection.client.errata.listPackages(connection.key, self.advisory_name):
+            thepackage = RHNSPackage(connection,apackage)
+            self.packages[thepackage['id']] = thepackage
+        pass
+
+
+    def __eq__(self, other):
+        """compare two erratas and tells if they are the same based on the packages they contain"""
+        #two erratas are identical if we have all the packages of one into the other - erratas can not include packages on the base of the architecture.
+        #therefore if we compare the channel which has the least packages with the other, we can find out if all its packages are in the other.
+        samepackages = True
+        if len(other.packages) < len(self.packages):
+            for package in other.packages:
+                if not self.packages.has_key(package.packageid):
+                    samepackages = False
+        else:
+            for package in self.packages:
+                if not other.packages.has_key(package.packageid):
+                    samepackages = False
+        return samapackages
+
+
 class RHNSChannel(object):
 
     # the objects and their values
-    __new_channel = True #true means the channel hasn't been saved into the db. Set to False later
-    __connection #contains the connection used to create the object. 
-    _label = None
-    _name = None
-    _arch = None
-    _description = None
-    _summary = None
-    _erratas = {}
-    _packages = {}
-    _systems = {}
-    _original = None
-    _parent = None
-    _children = {}
-    _checksum_label = None
+    #__new_channel = True #true means the channel hasn't been saved into the db. Set to False later
+    #__connection #contains the connection used to create the object. 
+    #_label = None
+    #_name = None
+    #_arch = None
+    #_description = None
+    #_summary = None
+    #_erratas = {}
+    #_packages = {}
+    #_systems = {}
+    #_original = None
+    #_parent = None
+    #_children = {}
+    #_checksum_label = None
 
     ###
     # properties
@@ -119,7 +178,7 @@ class RHNSChannel(object):
         self._name = value
         # name can be updated after creation of the channel
         if not __new_channel:
-            self.__update_details
+            self.__udpdates['name'] = self._name
 
     # arch property (arch_name or arch_label depending which parts of the api)
     @property
@@ -143,19 +202,19 @@ class RHNSChannel(object):
         self._description = value
         #this setting can be written to the db if this is an existing channel
         if not __new_channel:
-            self.__update_details()
+            self.__updates['description'] = self._description
             
     # summary property
     @property
     def summary(self):
         return self._summary
 
-    @description.setter
+    @summary.setter
     def summary(self,value):
         self._summary = value
         #this setting can be written to the db if this is an existing channel
         if not __new_channel:
-            self.__update_details()
+            self.__updates['summary'] = self._summary
 
     #original property (clone relation)
     @property
@@ -191,7 +250,7 @@ class RHNSChannel(object):
     def checksum_label(self,value):
         self._checksum_label = value
         if self.__update_channel:
-            self.__update_details()
+            self.__updates['checksum_label'] = self._checksum_label
 
     #the dictionaries
 
@@ -225,10 +284,12 @@ class RHNSChannel(object):
     #TODO : add a lot more properties to errata to handle operations
 
 
+    # hidden settings : 
+    # - id (used to update the channel, required nowhere else
 
     def __init__(self, connection, label, source == None):
         """populates the object with the data from the channel"""
-        #TODO: come back and update this, not sure is proper
+        #TODO : add maintainer support & handler to ignore if it is empty
         __connection = connection
         if isinstance(source, RHNSChannel):
             #code to create an object from the details
@@ -245,12 +306,21 @@ class RHNSChannel(object):
             self._systems = source.systems
             self._children = source.children
             self._original = source.original
+            #string "maintainer_name"
+            #string "maintainer_email"
+            #string "maintainer_phone"
+            #string "support_policy"
+            #string "gpg_key_url"
+            #string "gpg_key_id"
+            #string "gpg_key_fp"
             self._systems = source.systems
+            self.__id = None
             self.__new_channel = True
         else
             # create the object by fetching it piece by piece
             self._label = label
             infos = connection.channel.software.getDetails(connection.key, self.label)
+            self.__id = infos['id']
             self._name = infos['name']
             self._arch = infos['arch_name']
             self._description = infos['description']
@@ -258,48 +328,83 @@ class RHNSChannel(object):
             self._parent = infos['parent_channel_label']
             self._original = infos['clone_original']
             self._checksum_label = infos['checksum_label']
+            #string "maintainer_name"
+            #string "maintainer_email"
+            #string "maintainer_phone"
+            #string "support_policy"
+            #string "gpg_key_url"
+            #string "gpg_key_id"
+            #string "gpg_key_fp"
             self.__populate_children()
             self.__populate_packages()
             self.__populate_systems()
+            self.__populate_erratas()
             self.__new_channel = False
+        self.__updates = {} # used to update content after the channel has been created
         pass
 
-    def create(self):
-        """creates the object from all the settings the object was created with"""
-        if self.new_channel :
+    def commit(self):
+        """creates the object or saves changes pending. needs to be called after a change to make the change persistant. called by destructor to ensure changes are saved"""
+        if self.__new_channel :
             #code
             #close changes
-            self.new_channel = False
+            self.__new_channel = False
+        elif len(self.__updates) > 0:
+            #commit updates pending
+            self.__update_details
+            self.__updates = {}
         else:
-            print "ignoring order to create a channel - this channel already exists"
+            #TODO : replace with exception or reaction to verbosity level
+            print "nothing to save"
         pass
 
-    def __update_defailt(self)
+    def __update_defails(self):
+        """updates the details of the channel"""
+        self.__connection.client.channel.software.setDetails( self.__connection.key, self._id, self.__updates )
 
+
+    def __populate_erratas(self):
+        """populates the erratas"""
+        self._erratas = {}
+        for errata in self.__connection.client.channel.software.listErrata(self.__connection.key, self._label):
+            self._erratas[errata['advisory_name']] = RHNSErrata(errata)
 
     def __populate_subscribed_machines(self):
         """populates the list of subscribed machines (ids subscrubed to that channel)"""
-        for system in connection.client.channel.listSubscribedSystems(connection.key, self.label):
-            self.systems[system['id']] = system['name']
+        self._systems = {}
+        for system in self.__connection.client.channel.listSubscribedSystems(self.__connection.key, self.label):
+            self._systems[system['id']] = system['name']
         pass
 
     def __populate_packages(self):
         """populates the list of packages """
-        for package in self.__connection.client.channel.software.listAllPackages(key, self.label):
-            #TODO : confirm syntax is correct
-            self.packages[package[id]] = RHNSPackge(package)
+        self._packages = {}
+        for package in self.__connection.client.channel.software.listAllPackages(self.__connection.key, self.label):
+            self._packages[package[id]] = RHNSPackge(package)
         pass
 
     def __populate_children(self):
         """populates the list of child channels one by one"""
-        for channel in connection.client.channel.software.listChildren(connection.key, self.label):
-            self.children[channel['label']] = RHNSChannel(connection, channel['label'])
+        self._children = {}
+        for channel in self.__connection.client.channel.software.listChildren(self.__connection.key, self.label):
+            self._children[channel['label']] = RHNSChannel(self.__connection, channel['label'])
         pass
 
-    def __find_erratas(self, connection):
+    def __find_erratas(self):
         """finds the erratas of the parent channel that are associated with the packages listed in the channel."""
         #TODO : work on this later (find all erratas in the original, go through all erratas and find the ones that have packages in the channel, then clone these in the channel)
         pass
+
+    def __delete_channel(self):
+        """deletes the channel"""
+        for child in self._children:
+            self.__connection.channel.software.delete(self.__connection.key, child.label)
+        del self._children[:]
+        self.__connection.channel.software.delete(self.__connection.key, self._label)
+
+    def __exit__(self):
+        """runs on exit"""
+        self.commit()
 
 
 #the main function of the program
