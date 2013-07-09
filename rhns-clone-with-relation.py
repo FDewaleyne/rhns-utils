@@ -491,7 +491,9 @@ class RHNSChannel(object):
 
     def __exit__(self):
         """runs on exit"""
-        self.commit()
+        #best not to enable this this is dangerous
+        #self.commit()
+        pass
 
 
 #the main function of the program
