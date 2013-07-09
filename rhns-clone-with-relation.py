@@ -136,22 +136,6 @@ class RHNSErrata(object):
 
 class RHNSChannel(object):
 
-    # the objects and their values
-    #__new_channel = True #true means the channel hasn't been saved into the db. Set to False later
-    #__connection #contains the connection used to create the object. 
-    #_label = None
-    #_name = None
-    #_arch = None
-    #_description = None
-    #_summary = None
-    #_erratas = {}
-    #_packages = {}
-    #_systems = {}
-    #_original = None
-    #_parent = None
-    #_children = {}
-    #_checksum_label = None
-
     ###
     # properties
     ###
