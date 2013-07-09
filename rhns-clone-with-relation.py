@@ -343,6 +343,7 @@ class RHNSChannel(object):
             self.__new_channel = True
         else
             # create the object by fetching it piece by piece
+            #TODO : test certain values for non-existance
             self._label = label
             infos = connection.channel.software.getDetails(connection.key, self.label)
             self.__id = infos['id']
@@ -409,10 +410,15 @@ class RHNSChannel(object):
     def __create(self):
         """creates the channel from the elements stored"""
         #instead of create use, clone if a clone should be created
-        if self._original == None
+        if self._original == None :
             #arch : channel-ia32, channel-ia64n, channel-sparc, etc. refer to the channel.software.create call for details
             #checksum_label should be sha1 or sha256 but from experience it's not down to only that.
-            self.__connection.client.channel.software.create( self.__connection.key, self._label, self._name, self._summary, self._arch, self._parent, self._checksum_label, self._gpg_key)
+            if len(self._gpg_key) == 0 and self._checksum_label == None :
+                self.__connection.client.channel.software.create( self.__connection.key, self._label, self._name, self._summary, self._arch, self._parent)
+            elsif len(self._gpg_key) == 0:
+                self.__connection.client.channel.software.create( self.__connection.key, self._label, self._name, self._summary, self._arch, self._parent, self._checksum_label)
+            else:
+                self.__connection.client.channel.software.create( self.__connection.key, self._label, self._name, self._summary, self._arch, self._parent, self._checksum_label, self._gpg_key)
         else:
             #call to the clone creation function
             #forcing to include the original state since we want it and not the current state to avoid removing packges
