@@ -302,11 +302,11 @@ class RHNSChannel(object):
             self._maintainer['fingerprint'] = values['fp']
         if self.__new_channel:
             if 'url' in self._gpg_key:
-                self.__updates['_gpg_key_name'] = self._gpg_key['url']
-            if 'email' in self._gpg_key:
-                self.__updates['_gpg_key_email'] = self._gpg_key['id']
-            if 'phone' in self._gpg_key :
-                self.__updates['_gpg_key_phone'] = self._gpg_key['fp']
+                self.__updates['gpg_key_url'] = self._gpg_key['url']
+            if 'id' in self._gpg_key:
+                self.__updates['gpg_key_id'] = self._gpg_key['id']
+            if 'fingerprint' in self._gpg_key :
+                self.__updates['gpg_key_fp'] = self._gpg_key['fingerprint']
 
 
     # hidden settings : 
