@@ -299,9 +299,9 @@ class RHNSChannel(object):
         if 'id' in values:
             self._maintainer['id'] = values['id']
         if 'fp' in values :
-            self._maintainer['fp'] = values['fp']
+            self._maintainer['fingerprint'] = values['fp']
         if self.__new_channel:
-            if 'name' in self._gpg_key:
+            if 'url' in self._gpg_key:
                 self.__updates['_gpg_key_name'] = self._gpg_key['url']
             if 'email' in self._gpg_key:
                 self.__updates['_gpg_key_email'] = self._gpg_key['id']
@@ -353,7 +353,7 @@ class RHNSChannel(object):
             self._maintainer['phone'] = infos["maintainer_phone"]
             self._gpg_key['url'] = infos["gpg_key_url"]
             self._gpg_key['id'] = infos["gpg_key_id"]
-            self._gpg_key['fp'] infos["gpg_key_fp"]
+            self._gpg_key['fingerprint'] infos["gpg_key_fp"]
             self.__populate_children()
             self.__populate_packages()
             self.__populate_systems()
@@ -394,6 +394,9 @@ class RHNSChannel(object):
 
     def __create(self):
         """creates the channel from the elements stored"""
+        #arch : channel-ia32, channel-ia64n, channel-sparc, etc. refer to the channel.software.create call for details
+        #checksum_label should be sha1 or sha256 but from experience it's not down to only that.
+        self.__connection.client.channel.software.create( self.__connection.key, self._label, self._name, self._summary, self._arch, self._parent, self._checksum_label, self._gpg_key)
         pass
 
     def __populate_erratas(self):
