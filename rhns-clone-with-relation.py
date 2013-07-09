@@ -283,6 +283,29 @@ class RHNSChannel(object):
         return self._erratas
     #TODO : add a lot more properties to errata to handle operations
 
+    # maintainer properties
+
+    @property
+    def maintainer(self):
+        return self._maintainer
+
+    @maintainer.setter
+    sef maintainer(self,values):
+        """sets the values of maintainer, using name, email and phone"""
+        if 'name' in values:
+            self._maintainer['name'] = values['name']
+        if 'email' in values:
+            self._maintainer['email'] = values['email']
+        if 'phone' in values :
+            self._maintainer['phone'] = values['phone']
+        if self.__new_channel:
+            if 'name' in self._maintainer:
+                self.__updates['maintainer_name'] = self._maintainer['name']
+            if 'email' in self._maintainer:
+                self.__updates['maintainer_email'] = self._maintainer['email']
+            if 'phone' in self._maintainer :
+                self.__updates['maintainer_phone'] = self._maintainer['phone']
+
 
     # hidden settings : 
     # - id (used to update the channel, required nowhere else
@@ -306,9 +329,7 @@ class RHNSChannel(object):
             self._systems = source.systems
             self._children = source.children
             self._original = source.original
-            #string "maintainer_name"
-            #string "maintainer_email"
-            #string "maintainer_phone"
+            selth._maintainer = source._maintainer
             #string "support_policy"
             #string "gpg_key_url"
             #string "gpg_key_id"
@@ -328,9 +349,9 @@ class RHNSChannel(object):
             self._parent = infos['parent_channel_label']
             self._original = infos['clone_original']
             self._checksum_label = infos['checksum_label']
-            #string "maintainer_name"
-            #string "maintainer_email"
-            #string "maintainer_phone"
+            self._maintainer['name'] = infos["maintainer_name"]
+            self._maintainer['email'] = sinfos["maintainer_email"]
+            self._maintainer = infos["maintainer_phone"]
             #string "support_policy"
             #string "gpg_key_url"
             #string "gpg_key_id"
@@ -351,7 +372,8 @@ class RHNSChannel(object):
             self.__new_channel = False
         elif len(self.__updates) > 0:
             #commit updates pending
-            self.__update_details
+            self.__update_details()
+            del self.__updates
             self.__updates = {}
         else:
             #TODO : replace with exception or reaction to verbosity level
