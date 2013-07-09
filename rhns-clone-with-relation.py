@@ -308,7 +308,6 @@ class RHNSChannel(object):
             if 'fingerprint' in self._gpg_key :
                 self.__updates['gpg_key_fp'] = self._gpg_key['fingerprint']
 
-
     # hidden settings : 
     # - id (used to update the channel, required nowhere else
 
@@ -335,6 +334,8 @@ class RHNSChannel(object):
             self._gpg_key = source._gpg_key
             self._systems = source.systems
             self.__id = None
+            #prepare for the first push
+            self.__update = {'description': self._description}
             self.__new_channel = True
         else
             # create the object by fetching it piece by piece
@@ -351,6 +352,7 @@ class RHNSChannel(object):
             self._maintainer['name'] = infos["maintainer_name"]
             self._maintainer['email'] = sinfos["maintainer_email"]
             self._maintainer['phone'] = infos["maintainer_phone"]
+            self._maintainer['support_policy'] = infos["support_policy"]
             self._gpg_key['url'] = infos["gpg_key_url"]
             self._gpg_key['id'] = infos["gpg_key_id"]
             self._gpg_key['fingerprint'] infos["gpg_key_fp"]
@@ -365,7 +367,12 @@ class RHNSChannel(object):
     def commit(self):
         """creates the object or saves changes pending. needs to be called after a change to make the change persistant. called by destructor to ensure changes are saved"""
         if self.__new_channel :
-            #code
+            #create the channel
+            self.__create()
+            #update fields that can't be set at creation time
+            self.__update_details()
+            del __updates
+            self.__updates = {}
             #close changes
             self.__new_channel = False
         elif len(self.__updates) > 0:
@@ -388,8 +395,11 @@ class RHNSChannel(object):
         #TODO: refresh details of the channel
         pass
 
-    def __update_defails(self):
+    def __update_details(self):
         """updates the details of the channel"""
+        if 'support_policy' in self.__updates:
+            #this call is the only thing that can set support_policy
+            self.__connection.client.channel.software.setContactDetails( self.__connection.key, self._label, self._maintainer['name'], self._maintainer['email'], self._maintainer['phone'], self._maintainer['support_policy'])
         self.__connection.client.channel.software.setDetails( self.__connection.key, self._id, self.__updates )
 
     def __create(self):
@@ -397,6 +407,10 @@ class RHNSChannel(object):
         #arch : channel-ia32, channel-ia64n, channel-sparc, etc. refer to the channel.software.create call for details
         #checksum_label should be sha1 or sha256 but from experience it's not down to only that.
         self.__connection.client.channel.software.create( self.__connection.key, self._label, self._name, self._summary, self._arch, self._parent, self._checksum_label, self._gpg_key)
+        #this call is the only thing that can set support_policy
+        self.__connection.client.channel.software.setContactDetails( self.__connection.key, self._label, self._maintainer['name'], self._maintainer['email'], self._maintainer['phone'], self._maintainer['support_policy'])
+        infos = self.__connection.client.channel.software.getDetails(self.__connection.key, self._label)
+        self._id = infos['id']
         pass
 
     def __populate_erratas(self):
