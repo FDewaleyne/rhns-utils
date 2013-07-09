@@ -212,7 +212,6 @@ class RHNSChannel(object):
         else:
             print "cannot change the clone relation on a channel already created"
 
-
     #parent property (channel relation)
     @property
     def parent(self):
@@ -242,30 +241,27 @@ class RHNSChannel(object):
     @property
     def children(self):
         return self._children
-   
-    #TODO: add property to refresh the children
-
+    #this should only be manipulated by the functions of the channel object, no setter.
 
     # packages handling
     @property
     def packages(self):
         return self._packages
-    #TODO : add property to refresh the packages
-    #TODO : add property to add a package to channel from package object.
+    #this should only be manipulated by the functions of the channel object, no setter.
 
     # systems handling
     @property
     def systems(self):
         return self._systems
 
-    #TODO : add property to refresh the systems
-    #TODO : add property to add systems to the channel
+    #TODO : replace the list of systems with a list of system objects so that adding, removing and other operations is possible (long term)
 
     # errata handling
     @property
     def erratas(self):
         return self._erratas
-    #TODO : add a lot more properties to errata to handle operations
+    #this should only be manipulated by functions around the channel or by the object stored...
+    #TODO: implement setter and deleter around the notion of an errata object
 
     # maintainer properties
 
@@ -382,10 +378,23 @@ class RHNSChannel(object):
             print "nothing to save"
         pass
 
+    def refresh(self):
+        """refreshes the contents of the channel"""
+        #TODO: refresh contents of the object here
+        #TODO: refresh childs
+        #TODO: refresh packages
+        #TODO: refresh systems
+        #TODO: refresh errata
+        #TODO: refresh details of the channel
+        pass
+
     def __update_defails(self):
         """updates the details of the channel"""
         self.__connection.client.channel.software.setDetails( self.__connection.key, self._id, self.__updates )
 
+    def __create(self):
+        """creates the channel from the elements stored"""
+        pass
 
     def __populate_erratas(self):
         """populates the erratas"""
