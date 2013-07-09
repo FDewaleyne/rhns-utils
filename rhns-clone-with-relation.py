@@ -408,13 +408,40 @@ class RHNSChannel(object):
 
     def __create(self):
         """creates the channel from the elements stored"""
-        #arch : channel-ia32, channel-ia64n, channel-sparc, etc. refer to the channel.software.create call for details
-        #checksum_label should be sha1 or sha256 but from experience it's not down to only that.
-        self.__connection.client.channel.software.create( self.__connection.key, self._label, self._name, self._summary, self._arch, self._parent, self._checksum_label, self._gpg_key)
+        #instead of create use, clone if a clone should be created
+        if self._original == None
+            #arch : channel-ia32, channel-ia64n, channel-sparc, etc. refer to the channel.software.create call for details
+            #checksum_label should be sha1 or sha256 but from experience it's not down to only that.
+            self.__connection.client.channel.software.create( self.__connection.key, self._label, self._name, self._summary, self._arch, self._parent, self._checksum_label, self._gpg_key)
+        else:
+            #call to the clone creation function
+            #forcing to include the original state since we want it and not the current state to avoid removing packges
+            self.__connection.client.channel.software.clone( self.__connection.key, self._original, self.__generate_details(), True) 
+
         #this call is the only thing that can set support_policy
         self.__connection.client.channel.software.setContactDetails( self.__connection.key, self._label, self._maintainer['name'], self._maintainer['email'], self._maintainer['phone'], self._maintainer['support_policy'])
         infos = self.__connection.client.channel.software.getDetails(self.__connection.key, self._label)
         self._id = infos['id']
+        pass
+
+    def __generate_details(self):
+        """generates the dictionary required by the clonning call, depending on the elements set"""
+        details = {'name': self._name, 'label': self._label, 'summary': self._summary}
+        if not self._description == None :
+            details['description'] = self._description
+        if not self._parent == None:
+            details['parent_label'] = self._parent
+        if not self._arch == None:
+            #TODO: make sure that the clone uses the same arch format as the create call.
+            #NOTE: if omited the one of the original will be used
+            details['arch_label'] = self._arch
+        if not len(self._gpg_key) == 0:
+            if 'url' in self._gpg_key:
+                details['gpg_key_url'] = self._gpg_key['url']
+            if 'id' in self._gpg_key:
+                details['gpg_key_id'] = self._gpg_key['id']
+            if 'fingerprint' in self._gpg_key:
+                details['gpg_key_fp'] = self._gpg_key['fingerprint']
         pass
 
     def __populate_erratas(self):
