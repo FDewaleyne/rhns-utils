@@ -306,6 +306,28 @@ class RHNSChannel(object):
             if 'phone' in self._maintainer :
                 self.__updates['maintainer_phone'] = self._maintainer['phone']
 
+    # gpg_key properties
+    @property
+    def gpg_key(self):
+        return self._maintainer
+
+    @gpg_key.setter
+    sef gpg_key(self,values):
+        """sets the values of gpg_key, using url, id and fp"""
+        if 'url' in values:
+            self._maintainer['url'] = values['url']
+        if 'id' in values:
+            self._maintainer['id'] = values['id']
+        if 'fp' in values :
+            self._maintainer['fp'] = values['fp']
+        if self.__new_channel:
+            if 'name' in self._gpg_key:
+                self.__updates['_gpg_key_name'] = self._gpg_key['url']
+            if 'email' in self._gpg_key:
+                self.__updates['_gpg_key_email'] = self._gpg_key['id']
+            if 'phone' in self._gpg_key :
+                self.__updates['_gpg_key_phone'] = self._gpg_key['fp']
+
 
     # hidden settings : 
     # - id (used to update the channel, required nowhere else
@@ -329,11 +351,8 @@ class RHNSChannel(object):
             self._systems = source.systems
             self._children = source.children
             self._original = source.original
-            selth._maintainer = source._maintainer
-            #string "support_policy"
-            #string "gpg_key_url"
-            #string "gpg_key_id"
-            #string "gpg_key_fp"
+            self._maintainer = source._maintainer
+            self._gpg_key = source._gpg_key
             self._systems = source.systems
             self.__id = None
             self.__new_channel = True
@@ -351,11 +370,10 @@ class RHNSChannel(object):
             self._checksum_label = infos['checksum_label']
             self._maintainer['name'] = infos["maintainer_name"]
             self._maintainer['email'] = sinfos["maintainer_email"]
-            self._maintainer = infos["maintainer_phone"]
-            #string "support_policy"
-            #string "gpg_key_url"
-            #string "gpg_key_id"
-            #string "gpg_key_fp"
+            self._maintainer['phone'] = infos["maintainer_phone"]
+            self._gpg_key['url'] = infos["gpg_key_url"]
+            self._gpg_key['id'] = infos["gpg_key_id"]
+            self._gpg_key['fp'] infos["gpg_key_fp"]
             self.__populate_children()
             self.__populate_packages()
             self.__populate_systems()
