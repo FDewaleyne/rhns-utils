@@ -341,8 +341,10 @@ class RHNSChannel(object):
             #prepare for the first push
             self.__update = {'description': self._description}
             self.__new_channel = True
+        #TODO: add way to be able to create an object from a dictionary
+        #elif isinstance(source, dict):
         else
-            # create the object by fetching it piece by piece
+            # create the object by fetching it piece by piece using the label
             #TODO : test certain values for non-existance
             self._label = label
             infos = connection.channel.software.getDetails(connection.key, self.label)
@@ -413,17 +415,20 @@ class RHNSChannel(object):
         if self._original == None :
             #arch : channel-ia32, channel-ia64n, channel-sparc, etc. refer to the channel.software.create call for details
             #checksum_label should be sha1 or sha256 but from experience it's not down to only that.
+            #self._parent should be "" if no parent is required
             if len(self._gpg_key) == 0 and self._checksum_label == None :
+                #cas 1 : minimal data
                 self.__connection.client.channel.software.create( self.__connection.key, self._label, self._name, self._summary, self._arch, self._parent)
             elsif len(self._gpg_key) == 0:
+                #cas 2: no gpg info
                 self.__connection.client.channel.software.create( self.__connection.key, self._label, self._name, self._summary, self._arch, self._parent, self._checksum_label)
             else:
+                #cas 3: all info
                 self.__connection.client.channel.software.create( self.__connection.key, self._label, self._name, self._summary, self._arch, self._parent, self._checksum_label, self._gpg_key)
         else:
             #call to the clone creation function
             #forcing to include the original state since we want it and not the current state to avoid removing packges
             self.__connection.client.channel.software.clone( self.__connection.key, self._original, self.__generate_details(), True) 
-
         #this call is the only thing that can set support_policy
         self.__connection.client.channel.software.setContactDetails( self.__connection.key, self._label, self._maintainer['name'], self._maintainer['email'], self._maintainer['phone'], self._maintainer['support_policy'])
         infos = self.__connection.client.channel.software.getDetails(self.__connection.key, self._label)
