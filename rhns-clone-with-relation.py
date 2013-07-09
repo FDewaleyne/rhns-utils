@@ -278,6 +278,8 @@ class RHNSChannel(object):
             self._maintainer['email'] = values['email']
         if 'phone' in values :
             self._maintainer['phone'] = values['phone']
+        if 'support_policy' in values:
+            self._maintainer['support_policy'] = values['support_policy']
         if self.__new_channel:
             if 'name' in self._maintainer:
                 self.__updates['maintainer_name'] = self._maintainer['name']
@@ -285,6 +287,8 @@ class RHNSChannel(object):
                 self.__updates['maintainer_email'] = self._maintainer['email']
             if 'phone' in self._maintainer :
                 self.__updates['maintainer_phone'] = self._maintainer['phone']
+            if 'support_policy' in self._maintainer:
+                self.__updates['support_policy'] = self._maintainer['support_policy']
 
     # gpg_key properties
     @property
