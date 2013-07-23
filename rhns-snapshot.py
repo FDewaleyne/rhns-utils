@@ -13,7 +13,7 @@ __license__ = "GPL"
 __version__ = "0.1"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
-__status__ = "dev"
+__status__ = "stable"
 
 import xmlrpclib, re, sys
 
