@@ -35,7 +35,7 @@ class RHNSConnection:
                 SATELLITE_URL = "https://"+SATELLITE_URL
             if re.search('/rpc/api$', SATELLITE_URL) == None:
                 SATELLITE_URL = SATELLITE_URL+"/rpc/api"
-        self._client = xmlrpclib.Server(URL)
+        self._client = xmlrpclib.Server(SATELLITE_URL)
         self._key = self._client.auth.login(username,password)
         self._username = username
         self._host = host
@@ -85,12 +85,12 @@ class RHNSSnapshots:
         """list of snapshots for a system"""
         self.__conn = conn
         self._sysid = sysid
-        self._snaplist = self.__conn.client.system.provisioning.snapshot.listSnapshots(__conn._key, sysid)
+        self._snaplist = self.__conn._client.system.provisioning.snapshot.listSnapshots(self.__conn._key, sysid,{})
         pass
 
     def printList(self):
         """displays the list of snapshots for that system"""
-        print "List of snapshots for system "+str(_sysid)
+        print "List of snapshots for system "+str(self._sysid)
         print " ID - date - reason - channels - tags"
         for snapshot in self._snaplist:
             if snapshot.get('invalid_reason') == None:
@@ -108,8 +108,8 @@ def main(versioninfo):
     parser.add_option("-l", "--login", dest="satuser", type="string", help="User to connect to satellite")
     parser.add_option("-p", "--password", dest="satpwd", type="string", help="Password to connect to satellite")
     parser.add_option("--list", dest="listing", action="store_true", help="lists the snapshots for the system")
-    parser.add_option("--sysid", dest="sysid", type="string", help="ID of the system to use (required)")
-    parser.add_option("--snapid", dest="snapid", type="string", help="ID of the snapshot to use")
+    parser.add_option("--sysid", dest="sysid", type="int", help="ID of the system to use (required)")
+    parser.add_option("--snapid", dest="snapid", type="int", help="ID of the snapshot to use")
     (options, args) = parser.parse_args()
     #check for the required options
     if options.satuser != None  and options.satpwd != None and options.sysid != None:
