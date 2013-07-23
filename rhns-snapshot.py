@@ -100,7 +100,7 @@ class RHNSSnapshots:
             print " %s - %s - %s - %s" % (str(snapshot['id']), str(snapshot['created']), ','.join(snapshot['channels']), ','.join(snapshot['tags']))
         pass
 
-def __main__(__version__):
+def main(versioninfo):
     """main function"""
     import optparse
     parser = optparse.OptionParser(description="Usage: %prog [options]\nThis program will clone all erratas and packages from the source to the destination as long as they are not already present in the destiation, depending on which settings are used", version="%prog "+versioninfo)
