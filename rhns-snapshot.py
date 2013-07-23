@@ -28,7 +28,13 @@ class RHNSConnection:
 
     def __init__(self,username,password,host):
         """connects to the satellite db with given parameters"""
-        URL = "https://%s/rpc/api" % host
+        #format the url if a part is missing
+        SATELLITE_URL = host
+        if re.match('^http(s)?://[\w\-.]+/rpc/api',SATELLITE_URL) == None:
+            if re.search('^http(s)?://', SATELLITE_URL) == None:
+                SATELLITE_URL = "https://"+SATELLITE_URL
+            if re.search('/rpc/api$', SATELLITE_URL) == None:
+                SATELLITE_URL = SATELLITE_URL+"/rpc/api"
         self._client = xmlrpclib.Server(URL)
         self._key = self._client.auth.login(username,password)
         self._username = username
@@ -96,7 +102,11 @@ class RHNSSnapshots:
 
 def __main__(__version__):
     """main function"""
-    #TODO: finish this
+    import optparse
+    parser = optparse.OptionParser(description="Usage: %prog [options]\nThis program will clone all erratas and packages from the source to the destination as long as they are not already present in the destiation, depending on which settings are used", version="%prog "+versioninfo)
+    parser.add_option("-u", "--url", dest="saturl", type="string", help="url or hostname of the satellite to use e.g. http://satellite.example.com/rpc/api", default="https://127.0.0.1/rpc/api")
+    parser.add_option("-l", "--login", dest="satuser", type="string", help="User to connect to satellite")
+    parser.add_option("-p", "--password", dest="satpwd", type="string", help="Password to connect to satellite")
     pass
 
 if __name__ == "__main__":
