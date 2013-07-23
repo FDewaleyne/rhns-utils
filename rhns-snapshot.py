@@ -109,6 +109,12 @@ def __main__(__version__):
     parser.add_option("-p", "--password", dest="satpwd", type="string", help="Password to connect to satellite")
     parser.add_option("--list", dest="listing", action="store_true", help="lists the snapshots for the system")
     parser.add_option("--sysid", dest="sysid", type="string", help="ID of the system to use (required)")
+    (options, args) = parser.parse_args()
+    #check for the required options
+    if options.satuser != None  and options.satpwd != None and options.sysid != None:
+        #do the magic
+    else:
+        parser.error('Missing parameters - make sure user, password and systemid are given. use -h for help.')
     pass
 
 if __name__ == "__main__":
