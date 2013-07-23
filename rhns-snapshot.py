@@ -109,10 +109,20 @@ def __main__(__version__):
     parser.add_option("-p", "--password", dest="satpwd", type="string", help="Password to connect to satellite")
     parser.add_option("--list", dest="listing", action="store_true", help="lists the snapshots for the system")
     parser.add_option("--sysid", dest="sysid", type="string", help="ID of the system to use (required)")
+    parser.add_option("--snapid", dest="snapid", type="string", help="ID of the snapshot to use")
     (options, args) = parser.parse_args()
     #check for the required options
     if options.satuser != None  and options.satpwd != None and options.sysid != None:
-        #do the magic
+        conn = RHNSConnection(options.satuser, options.satpwd, options.saturl)
+        if options.listing or options.snapid == None:
+            if options.snapid == None and not options.listing:
+                sys.stderr.write("snapid missing - falling back to listing instead")
+            listings = RHNSSnapshots(options.sysid, conn)
+            listings.printList()
+        else:
+            snapshot = RHNSSnapshot(options.snapid, conn)
+            snapshot.printPackages()
+        conn.close()
     else:
         parser.error('Missing parameters - make sure user, password and systemid are given. use -h for help.')
     pass
