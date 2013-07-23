@@ -15,7 +15,7 @@ __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "dev"
 
-import xmlrpclib, re
+import xmlrpclib, re, sys
 
 #connector class -used to initiate a connection to a satellite and to send the proper satellite the proper commands
 class RHNSConnection:
@@ -108,23 +108,26 @@ def main(versioninfo):
     parser.add_option("-l", "--login", dest="satuser", type="string", help="User to connect to satellite")
     parser.add_option("-p", "--password", dest="satpwd", type="string", help="Password to connect to satellite")
     parser.add_option("--list", dest="listing", action="store_true", help="lists the snapshots for the system")
-    parser.add_option("--sysid", dest="sysid", type="int", help="ID of the system to use (required)")
+    parser.add_option("--sysid", dest="sysid", type="int", help="ID of the system to use")
     parser.add_option("--snapid", dest="snapid", type="int", help="ID of the snapshot to use")
     (options, args) = parser.parse_args()
     #check for the required options
-    if options.satuser != None  and options.satpwd != None and options.sysid != None:
+    if options.satuser == None  or options.satpwd == None:
+        parser.error('username and/or password missing, check -h for usage info')
+    elif options.sysid and options.listing and options.snapid == None :
         conn = RHNSConnection(options.satuser, options.satpwd, options.saturl)
-        if options.listing or options.snapid == None:
-            if options.snapid == None and not options.listing:
-                sys.stderr.write("snapid missing - falling back to listing instead")
-            listings = RHNSSnapshots(options.sysid, conn)
-            listings.printList()
-        else:
-            snapshot = RHNSSnapshot(options.snapid, conn)
-            snapshot.printPackages()
+        if options.snapid == None and not options.listing:
+            sys.stderr.write("snapid missing - falling back to listing instead")
+        listings = RHNSSnapshots(options.sysid, conn)
+        listings.printList()
+        conn.close()
+    elif options.snapid != None:
+        conn = RHNSConnection(options.satuser, options.satpwd, options.saturl)
+        snapshot = RHNSSnapshot(options.snapid, conn)
+        snapshot.printPackages()
         conn.close()
     else:
-        parser.error('Missing parameters - make sure user, password and systemid are given. use -h for help.')
+        parser.error('Missing parameters -  use -h for help.')
     pass
 
 if __name__ == "__main__":
