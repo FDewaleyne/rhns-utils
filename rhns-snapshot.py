@@ -107,6 +107,8 @@ def __main__(__version__):
     parser.add_option("-u", "--url", dest="saturl", type="string", help="url or hostname of the satellite to use e.g. http://satellite.example.com/rpc/api", default="https://127.0.0.1/rpc/api")
     parser.add_option("-l", "--login", dest="satuser", type="string", help="User to connect to satellite")
     parser.add_option("-p", "--password", dest="satpwd", type="string", help="Password to connect to satellite")
+    parser.add_option("--list", dest="listing", action="store_true", help="lists the snapshots for the system")
+    parser.add_option("--sysid", dest="sysid", type="string", help="ID of the system to use (required)")
     pass
 
 if __name__ == "__main__":
