@@ -6,7 +6,7 @@ __license__ = "GPL"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "dev"
-__version__ = 0.9
+__version__ = 0.9b
 
 #dumps the consumption of the satellite along with how many subscriptions are unused but assgned to a custom channel
 #confirmed to work for 5.4, and 5.3, will not work with 5.2.
@@ -197,6 +197,10 @@ def main(version):
     if options.entlist:
         key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
         list_entitlements(key)
+        client.auth.logout(key)
+    elif options.entitlement and not options.syslist:
+        key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
+        get_entitlements(key,options.entitlement)
         client.auth.logout(key)
     elif options.syslist:
         if options.entitlement == None:
