@@ -157,6 +157,29 @@ def list_entitlements(key):
             sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.")
             continue
 
+def get_entitlement(key, label):
+    """returns the consumption details for one entitlement"""
+    global client;
+    print ("\n")
+    #populates entitlements from the list of system entitlements then adds the software entitlements to the list
+    entitlements = client.org.listSystemEntitlements(key) + client.org.listSoftwareEntitlements(key)
+    for entry in entitlements:
+        if entry['label'] == label:
+            print("%s" % ("[================================[software   entitlements]================================]"))
+            print("%44s %s %s %s %s %s %s" % ("Entitlement Label"," Flex ", "   Total  ", " Used ", "Allocated", "Unallocated", " Free "))
+            print("%44s %s %s %s %s %s %s" % ("-----------------","------", "----------", "------", "---------", "-----------", "------"))
+            try:
+                print("%44s %6s %8s %6s %9s %11s %6s" % (entry['label'], "", str(entry.get('unallocated',0)+entry.get('allocated',0)), str(entry.get('used',0)) ,str(entry.get('allocated',0)), str(entry.get('unallocated',0)),  str(entry.get('free',0))))
+                if 'used_flex' in entry and 'free_flex' in entry:
+                    # only print flex entries if they exist
+                    print("%44s %6s %8s %6s %9s %11s %6s" % (entry.get('label',0), " Flex ", str(entry.get('unallocated_flex',0)+entry.get('allocated_flex',0)), str(entry.get('used_flex',0)) ,str(entry.get('allocated_flex',0)), str(entry.get('unallocated_flex',0)),  str(entry.get('free_flex',0))))
+            except:
+                sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.\n")
+                continue
+            break
+
+    pass
+
 
 def main(version):
     """main function - takes in the options and selects the behaviour"""
