@@ -6,7 +6,7 @@ __license__ = "GPL"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "dev"
-__version__ = 0.9b
+__version__ = "0.9b"
 
 #dumps the consumption of the satellite along with how many subscriptions are unused but assgned to a custom channel
 #confirmed to work for 5.4, and 5.3, will not work with 5.2.
@@ -127,7 +127,7 @@ def org_consumtion(key,orgid):
         except:
             sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.\n")
             continue
-   pass
+    pass
 
 
 def list_entitlements(key):
@@ -165,7 +165,7 @@ def get_entitlement(key, label):
     entitlements = client.org.listSystemEntitlements(key) + client.org.listSoftwareEntitlements(key)
     for entry in entitlements:
         if entry['label'] == label:
-            print("%s" % ("[================================[software   entitlements]================================]"))
+            print("%96s" % ("[================================["+label+"]================================]"))
             print("%44s %s %s %s %s %s %s" % ("Entitlement Label"," Flex ", "   Total  ", " Used ", "Allocated", "Unallocated", " Free "))
             print("%44s %s %s %s %s %s %s" % ("-----------------","------", "----------", "------", "---------", "-----------", "------"))
             try:
@@ -200,7 +200,7 @@ def main(version):
         client.auth.logout(key)
     elif options.entitlement and not options.syslist:
         key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
-        get_entitlements(key,options.entitlement)
+        get_entitlement(key,options.entitlement)
         client.auth.logout(key)
     elif options.syslist:
         if options.entitlement == None:
