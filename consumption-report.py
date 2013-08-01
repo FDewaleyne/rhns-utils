@@ -211,7 +211,7 @@ def main(version):
             #key = session_init()
             #client.auth.logout(key)
     else:
-        key = session_init()
+        key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
         general_consumption(key)
         client.auth.logout(key)
 
