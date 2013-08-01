@@ -1,6 +1,12 @@
 #!/usr/bin/python
 
-__version__ = 0.8
+__author__ = "Felix Dewaleyne"
+__credits__ = ["Felix Dewaleyne"]
+__license__ = "GPL"
+__maintainer__ = "Felix Dewaleyne"
+__email__ = "fdewaley@redhat.com"
+__status__ = "prod"
+__version__ = "0.10"
 
 #dumps the consumption of the satellite along with how many subscriptions are unused but assgned to a custom channel
 #confirmed to work for 5.4, and 5.3, will not work with 5.2.
@@ -15,6 +21,8 @@ __version__ = 0.8
 # V0.6 by FDewaleyne - 17-05-2013 - replaced error tracking, updated test for the flex entitlements
 # V0.7 by FDewaleyne - 18-06-2013 - displays used values for all entitlements
 # V0.8 by FDewaleyne - 18-06-2013 - update to the session init to be able to take settings in option
+# V0.9 by FDewaleyne - 18-06-2013 - handling of organizations added
+# V0.10 by FDewaleyne - 01-08-2013 - tests finished, script now stable all features working but syslist
 
 import xmlrpclib, os, ConfigParser, re, sys, getpass
 
@@ -93,6 +101,35 @@ def general_consumption(key):
             sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.\n")
             continue
 
+def org_consumtion(key,orgid):
+    """displays the consumption information for one org"""
+    global client;
+    #TODO : figure out what Free is for an organization here.
+    print("\n")
+    print("%s" % ("[=================================[system  entitlements]===========================]"))
+    print("%44s %s %s %s %s %s" % ("Entitlement Label", "   Total  ", " Used ", "Allocated", "Unallocated", " Free "))
+    print("%44s %s %s %s %s %s" % ("-----------------", "----------", "------", "---------", "-----------", "------"))
+    for entry in client.org.listSystemEntitlementsForOrg(key,orgid):
+        try:
+            print("%44s %8s %6s %9s %11s %6s" % (entry['label'], str(entry['unallocated']+entry['allocated']), str(entry['used']), str(entry['allocated']), str(entry['unallocated']),  str(entry['free'])))
+        except:
+            sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping\n")
+            continue
+    print("\n")
+    print("%s" % ("[================================[software   entitlements]================================]"))
+    print("%44s %s %s %s %s %s %s" % ("Entitlement Label"," Flex ", "   Total  ", " Used ", "Allocated", "Unallocated", " Free "))
+    print("%44s %s %s %s %s %s %s" % ("-----------------","------", "----------", "------", "---------", "-----------", "------"))
+    for entry in client.org.listSoftwareEntitlementsForOrg(key,orgid):
+        try:
+            print("%44s %6s %8s %6s %9s %11s %6s" % (entry['label'], "", str(entry['unallocated']+entry['allocated']), str(entry['used']) ,str(entry['allocated']), str(entry['unallocated']),  str(entry['free'])))
+            if 'used_flex' in entry and 'free_flex' in entry:
+                # only print flex entries if they exist
+                print("%44s %6s %8s %6s %9s %11s %6s" % (entry['label'], " Flex ", str(entry['unallocated_flex']+entry['allocated_flex']), str(entry['used_flex']) ,str(entry['allocated_flex']), str(entry['unallocated_flex']),  str(entry['free_flex'])))
+        except:
+            sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.\n")
+            continue
+    pass
+
 
 def list_entitlements(key):
     """ displays the list of entitlements for the satellite """
@@ -121,6 +158,29 @@ def list_entitlements(key):
             sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.")
             continue
 
+def get_entitlement(key, label):
+    """returns the consumption details for one entitlement"""
+    global client;
+    print ("\n")
+    #populates entitlements from the list of system entitlements then adds the software entitlements to the list
+    entitlements = client.org.listSystemEntitlements(key) + client.org.listSoftwareEntitlements(key)
+    for entry in entitlements:
+        if entry['label'] == label:
+            print("%96s" % ("[================================["+label+"]================================]"))
+            print("%44s %s %s %s %s %s %s" % ("Entitlement Label"," Flex ", "   Total  ", " Used ", "Allocated", "Unallocated", " Free "))
+            print("%44s %s %s %s %s %s %s" % ("-----------------","------", "----------", "------", "---------", "-----------", "------"))
+            try:
+                print("%44s %6s %8s %6s %9s %11s %6s" % (entry['label'], "", str(entry.get('unallocated',0)+entry.get('allocated',0)), str(entry.get('used',0)) ,str(entry.get('allocated',0)), str(entry.get('unallocated',0)),  str(entry.get('free',0))))
+                if 'used_flex' in entry and 'free_flex' in entry:
+                    # only print flex entries if they exist
+                    print("%44s %6s %8s %6s %9s %11s %6s" % (entry.get('label',0), " Flex ", str(entry.get('unallocated_flex',0)+entry.get('allocated_flex',0)), str(entry.get('used_flex',0)) ,str(entry.get('allocated_flex',0)), str(entry.get('unallocated_flex',0)),  str(entry.get('free_flex',0))))
+            except:
+                sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.\n")
+                continue
+            break
+
+    pass
+
 
 def main(version):
     """main function - takes in the options and selects the behaviour"""
@@ -129,28 +189,30 @@ def main(version):
     parser.add_option("-e", "--entitlement", dest="entitlement", default=None, help="Displays the allocation details of that entitlement for all sub organizations. Use a label ; Does not work pre satellite 5.3")
     parser.add_option("-s", "--syslist", dest="syslist", action="store_true", default=False, help="Displays the systems in the organization of the user consuming that entitlement at the moment")
     parser.add_option("-l", "--list", dest="entlist", action="store_true", default=False, help="Displays the entitlements available on the satellite and their names")
+    parser.add_option("-o", "--orgid", dest="orgid", default=None, help="Number of the organization to report entitlements for ; not implemented yet")
     parser.add_option("--url", dest="saturl",default=None, help="URL of the satellite api, e.g. https://satellite.example.com/rpc/api or http://127.0.0.1/rpc/api ; can also be just the hostname or ip of the satellite. Facultative.")
     parser.add_option("--user", dest="satuser",default=None, help="username to use with the satellite. Should be admin of the organization owning the channels. Faculative.")
     parser.add_option("--password", dest="satpwd",default=None, help="password of the user. Will be asked if not given and not in the configuration file.")
-# for future updates
-#    parser.add_option("--org", dest="satorg", default="baseorg", help="name of the organization to use - design the section of the config file to use. Facultative, defaults to %default")
+    parser.add_option("--org", dest="satorg", default="baseorg", help="name of the organization to use - design the section of the config file to use. Facultative, defaults to %default")
     (options, args) = parser.parse_args()
     if options.entlist:
-# for future feature
-#        key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
-        key = session_init("baseorg" , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
+        key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
         list_entitlements(key)
+        client.auth.logout(key)
+    elif options.entitlement and not options.syslist:
+        key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
+        get_entitlement(key,options.entitlement)
         client.auth.logout(key)
     elif options.syslist:
         if options.entitlement == None:
             parser.error('you forgot to select an entitlement')
             parser.print_help()
         else:
-            parser.error('not implemented yet - check -h for all options')
+            parser.error('not implemented yet')
             #key = session_init()
             #client.auth.logout(key)
     else:
-        key = session_init()
+        key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
         general_consumption(key)
         client.auth.logout(key)
 
