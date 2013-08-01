@@ -5,8 +5,8 @@ __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
-__status__ = "dev"
-__version__ = "0.9b"
+__status__ = "prod"
+__version__ = "0.10"
 
 #dumps the consumption of the satellite along with how many subscriptions are unused but assgned to a custom channel
 #confirmed to work for 5.4, and 5.3, will not work with 5.2.
@@ -22,6 +22,7 @@ __version__ = "0.9b"
 # V0.7 by FDewaleyne - 18-06-2013 - displays used values for all entitlements
 # V0.8 by FDewaleyne - 18-06-2013 - update to the session init to be able to take settings in option
 # V0.9 by FDewaleyne - 18-06-2013 - handling of organizations added
+# V0.10 by FDewaleyne - 01-08-2013 - tests finished, script now stable all features working but syslist
 
 import xmlrpclib, os, ConfigParser, re, sys, getpass
 
