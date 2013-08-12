@@ -115,7 +115,7 @@ def gen_idlist():
             if not row['id'] in list_ids:
                 list_ids.append(row['id'])
             print "\r%s of %s" % (str(c),str(len(rows))),
-            print ""
+        print ""
     else:
         print "no duplicates with an unknown provider detected"
     return list_ids
@@ -135,6 +135,11 @@ def main(versioninfo):
     else:
         #init
         conn = RHNSConnection(options.satuser,options.satpwd,options.sathost)
+        try:
+            conn.client.channel.software.create(conn.key,options.destChannel,options.destChannel,options.destChannel,"channel-x86_64","","sha1")
+        except:
+            print "unable to create the channel "+options.destChannel+" ... attempting to continue"
+            pass
         ids = gen_idlist()
         if len(ids) == 0:
             print "nothing to do"
