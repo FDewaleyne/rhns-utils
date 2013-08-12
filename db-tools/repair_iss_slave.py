@@ -14,10 +14,10 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.1"
+__version__ = "0.2"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
-__status__ = "dev"
+__status__ = "prod"
 
 # copies a configuration channel from one satellite to another
 
@@ -114,7 +114,7 @@ def gen_idlist():
             c += 1
             if not row['id'] in list_ids:
                 list_ids.append(row['id'])
-            print "\r%s of %s" % (str(c),str(len(rows))),
+            print "\r%s of %s" % (str(int(round(c/2))),str(int(len(rows)/2))),
         print ""
     else:
         print "no duplicates with an unknown provider detected"
