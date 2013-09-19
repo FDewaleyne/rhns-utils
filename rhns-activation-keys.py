@@ -16,17 +16,17 @@ def session_init(orgname='baseorg'):
     global client;
     global config;
     global SATELLITE_LOGIN;
-    if config.has_section(orgname) and config.has_option(orgname,'username') and config.has_option(orgname,'password') and config.has_option('baseorg','url'):
+    if config.has_section(orgname) and config.has_option(orgname,'username') and config.has_option(orgname,'password') and config.has_option('default','url'):
         SATELLITE_LOGIN = config.get(orgname,'username')
         SATELLITE_PASSWORD = config.get(orgname,'password')
-        SATELLITE_URL = config.get('baseorg','url')
+        SATELLITE_URL = config.get('default','url')
     else:
-        if not config.has_option('baseorg','url'):
+        if not config.has_option('default','url'):
             sys.stderr.write("enter the satellite url, such as https://satellite.example.com/rpc/api")
             sys.stderr.write("\n")
             SATELLITE_URL = raw_input().strip()
         else:
-            SATELLITE_URL = config.get('baseorg','url')
+            SATELLITE_URL = config.get('default','url')
         sys.stderr.write("Login details for %s\n\n" % SATELLITE_URL)
         sys.stderr.write("Login: ")
         SATELLITE_LOGIN = raw_input().strip()
