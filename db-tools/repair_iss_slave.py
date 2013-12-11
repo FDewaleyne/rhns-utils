@@ -181,8 +181,13 @@ def main(versioninfo):
         try:
             conn.client.channel.software.create(conn.key,options.destChannel,options.destChannel,options.destChannel,channel_arch,"","sha1")
         except:
-            print "unable to create the channel "+options.destChannel+" ... attempting to continue"
-            pass
+            cdetails = conn.client.channel.software.getDetails(conn.key,options.destChannel)
+            if arch == cdetails['arch_name'] :
+                print "unable to create the channel "+options.destChannel+" ... attempting to continue"
+                pass
+            else:
+                print "unable to create the channel "+options.destChannel+" as arch "+options.arch+" ; stopping here"
+                raise
         ids = gen_idlist()
         if len(ids) == 0:
             print "nothing to do"
