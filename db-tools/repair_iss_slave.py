@@ -154,7 +154,7 @@ def filterPackagesByArch(ids,arch,conn):
             print str(id)+" : "+details['name']+'-'+details['version']+'-'+details['release']+'.'+details['epoch']+'.'+details['arch_label']
         if details['arch_label'] in testarchs:
             filtered_ids.append(id)
-    pass
+    return filtered_ids
 
 #the main function of the program
 def main(versioninfo):
