@@ -69,6 +69,7 @@ for entry_layer0 in os.listdir(VARSAT):
         continue; # this is not a folder we should scan.
     else:
         currentpath_l0=VARSAT+"/"+entry_layer0
+        print ""
         print "checking "+currentpath_l0
         print "    ok count    bad count"
         if os.path.isdir(currentpath_l0) == True:
@@ -133,4 +134,5 @@ if bad_files:
     print "finished. Please run satellite-sync now if files were deleted."
 
 else:
+    print ""
     print "all files ok"
