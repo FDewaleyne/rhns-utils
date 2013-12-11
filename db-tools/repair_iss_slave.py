@@ -18,7 +18,6 @@ __version__ = "0.2"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "prod"
-
 # copies a configuration channel from one satellite to another
 
 import xmlrpclib, re
@@ -120,6 +119,42 @@ def gen_idlist():
         print "no duplicates with an unknown provider detected"
     return list_ids
 
+def getChannelArch(arch):
+    """returns a value if it is a compatible channel or just None"""
+    if arch in ['ia32', 'ia64', 'sparc', 'alpha', 's390', 's390x', 'iSeries', 'pSeries', 'x86_64', 'ppc', 'sparc-sun-solaris', 'i386-sun-solaris']:
+        return "channel-"+arch
+    else:
+        return None
+    pass
+
+def matchArch(arch):
+    """returns what a package architecture should be for that arch value"""
+    # this is likely not going to work for everyone but it should cover most cases. 
+    if arch == 'ia32':
+        return ["i686","i386"]
+    elif arch == 'ia64':
+        return ["x86_64"]
+    elif arch == 'x86_64':
+        return ["i386","i686","x86_64"]
+    #may need exceptions for *-sun-solaris and other archs - don't have any packages for these right now
+    else:
+        #that should work for most cases
+        return [arch]
+    pass
+
+def filterPackagesByArch(ids,arch,conn):
+    """filters the packages depending on the architecture selected"""
+    global verbose
+    #grab a list of the valid archs since some architectures selected could accept i386 and x86_64 packages
+    testarchs = matchArch(arch)
+    filtered_ids = []
+    for id in ids:
+        details = conn.client.packages.getDetails(conn.key, id)
+        if verbose:
+            print str(id)+" : "+details['name']+'-'+details['version']+'-'+details['release']+'.'+details['epoch']+'.'+details['arch_label']
+        if details['arch_label'] in testarchs:
+            filtered_ids.append(id)
+    pass
 
 #the main function of the program
 def main(versioninfo):
@@ -129,14 +164,22 @@ def main(versioninfo):
     parser.add_option("-l", "--login", dest="satuser", type="string", help="User to connect to satellite")
     parser.add_option("-p", "--password", dest="satpwd", type="string", help="Password to connect to satellite")
     parser.add_option("-c", "--destChannel", dest="destChannel", default="to_delete",  type="string", help="Channel to populate with the packages that don't have a path")
+    parser.add_option("-A", "--arch",dest="arch", default="x86_64", type="string", help="Architecture to use when creating the channel and filtering packages. Defaults to x86_64 which accepts 64 and 32 bits packages")
+    parser.add_option("-v", "--verbose", dest="verbose", action="store_true", default=False, help="Enables debug output")
     (options, args) = parser.parse_args()
+    channel_arch = getChannelArch(options.arch)
+    global verbose 
+    verbose = options.verbose
     if not options.satuser or not options.satpwd:
         parser.error('username and password are required options.')
+    elif channel_arch == None:
+        parser.error('invalid architecture, accepted values are ia32, ia64, sparc, alpha, s390, s390x, iSeries, pSeries, x86_64, ppc, sparc-sun-solaris or i386-sun-solaris.\nPlease refer to the API documentation on software.channel.create for more information')
     else:
         #init
         conn = RHNSConnection(options.satuser,options.satpwd,options.sathost)
+        channel_arch = getChannelArch(options.arch)
         try:
-            conn.client.channel.software.create(conn.key,options.destChannel,options.destChannel,options.destChannel,"channel-x86_64","","sha1")
+            conn.client.channel.software.create(conn.key,options.destChannel,options.destChannel,options.destChannel,channel_arch,"","sha1")
         except:
             print "unable to create the channel "+options.destChannel+" ... attempting to continue"
             pass
@@ -144,8 +187,9 @@ def main(versioninfo):
         if len(ids) == 0:
             print "nothing to do"
         else:
-            print "adding "+str(len(ids))+" packages to the channel "
-            conn.client.channel.software.addPackages(conn.key,options.destChannel,ids)
+            filtered_ids = filterPackagesByArch(ids,options.arch,conn)
+            print "found "+str(len(ids))+" packages to remove, adding "+str(len(filtered_ids))+" to the channel "+options.destChannel
+            conn.client.channel.software.addPackages(conn.key,options.destChannel,filtered_ids)
             print "remember to backup before deleting"
         conn.close()
 
