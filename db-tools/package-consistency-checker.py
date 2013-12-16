@@ -2,13 +2,13 @@
 
 ###
 #
-# WARNING not to be used without a good reason can break the satellite and will break support.
-# DO A BACKUP OF THE DB BEFORE USING THIS
+# WARNING DO A BACKUP OF THE DB BEFORE USING THIS SCRIPT
+# SHOULD ONLY BE USED WHEN ASKED TO BY SUPPORT
 #
 ###
-#
-# meant to be use with satellite 5.4.1 on a rhel5 64bits.
-#
+###
+# To the extent possible under law, Red Hat, Inc. has dedicated all copyright to this software to the public domain worldwide, pursuant to the CC0 Public Domain Dedication. 
+# This software is distributed without any warranty.  See <http://creativecommons.org/publicdomain/zero/1.0/>.
 ###
 
 __author__ = "Felix Dewaleyne"
@@ -159,7 +159,7 @@ def filterPackagesByArch(ids,arch,conn):
 #the main function of the program
 def main(versioninfo):
     import optparse
-    parser = optparse.OptionParser(description="Usage: %prog [options]\nThis program will clone all erratas and packages from the source to the destination as long as they are not already present in the destiation, depending on which settings are used", version="%prog "+versioninfo)
+    parser = optparse.OptionParser(description="Usage: %prog [options]\nThis program will clone all erratas and packages from the source to the destination as long as they are not already present in the destiation, depending on which settings are used\n REMEMBER TO BACKUP YOUR DATABASE", version="%prog "+versioninfo)
     parser.add_option("-H", "--host", dest="sathost", type="string", help="hostname of the satellite to use, preferably a fqdn e.g. satellite.example.com", default="localhost")
     parser.add_option("-l", "--login", dest="satuser", type="string", help="User to connect to satellite")
     parser.add_option("-p", "--password", dest="satpwd", type="string", help="Password to connect to satellite")
