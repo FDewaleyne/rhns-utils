@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.3b"
+__version__ = "0.4"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "prod"
@@ -51,6 +51,68 @@ class RHNSConnection:
         if not self.closed :
             self.client.auth.logout(self.key)
         pass
+
+def gen_idlist_for_keyid(keyid = None):
+    """generates the list of package IDs that have a certain keyid or no keyid if it is None"""
+    import sys
+    sys.path.append("/usr/share/rhn")
+    try:
+            import spacewalk.common.rhnConfig as rhnConfig
+            import spacewalk.server.rhnSQL as rhnSQL
+    except ImportError:
+        try:
+            import common.rhnConfig as rhnConfig
+            import server.rhnSQL as rhnSQL
+        except ImportError:
+            print "Couldn't load the libraries required to connect to the db"
+            sys.exit(1)
+
+    rhnConfig.initCFG()
+    rhnSQL.initDB()
+    if keyid != None:
+        # query to select all packages with the same key
+        query = """
+                select  rpka.package_id as "id", rpn.name||'-'||rpe.version||'-'||rpe.release||'.'||rpa.label as package,
+                rpka.key_id, rpk.key_id as signing_key,
+                coalesce((select name from rhnpackageprovider rpp where rpp.id = rpk.provider_id),'Unknown') as provider,
+                rpka.created, rpka.modified
+        from    rhnpackagekeyassociation rpka, rhnpackage rp, rhnpackagename rpn, rhnpackagekey rpk, rhnpackageevr rpe, rhnpackagearch rpa
+        where   rpka.package_id = rp.id
+        and     rpka.key_id = rpk.id
+        and     rp.name_id = rpn.id
+        and     rp.evr_id = rpe.id
+        and     rp.package_arch_id = rpa.id
+        and     rpk.id = :keyid
+        """
+    else:
+        # query to select all packages with no keyid - will probably not return anything. Will probably never be used, but if it's required it's already there
+        query = """
+        select  rpka.package_id as "id", rpn.name||'-'||rpe.version||'-'||rpe.release||'.'||rpa.label as package,
+                rpka.key_id, rpk.key_id as signing_key,
+                coalesce((select name from rhnpackageprovider rpp where rpp.id = rpk.provider_id),'Unknown') as provider,
+                rpka.created, rpka.modified
+        from    rhnpackagekeyassociation rpka, rhnpackage rp, rhnpackagename rpn, rhnpackagekey rpk, rhnpackageevr rpe, rhnpackagearch rpa
+        where   rpka.package_id = rp.id
+        and     rpka.key_id = rpk.id
+        and     rp.name_id = rpn.id
+        and     rp.evr_id = rpe.id
+        and     rp.package_arch_id = rpa.id
+        and     rpk.id = NULL
+        """
+    cursor = rhnSQL.prepare(query)
+    cursor.execute()
+    rows = cursor.fetchall_dict()
+    list_ids = []
+    if not rows is None:
+        c = 0
+        for row in rows:
+            c += 1
+            list_ids.append(row['id'])
+            print "\r%s of %s" % (str(c), str(len(rows))),
+        print ""
+    else:
+        print "no packages found"
+    return list_ids
 
 def gen_idlist():
     """generates the list of package IDs"""
@@ -166,6 +228,8 @@ def main(versioninfo):
     parser.add_option("-c", "--destChannel", dest="destChannel", default="to_delete",  type="string", help="Channel to populate with the packages that don't have a path")
     parser.add_option("-A", "--arch",dest="arch", default="x86_64", type="string", help="Architecture to use when creating the channel and filtering packages. Defaults to x86_64 which accepts 64 and 32 bits packages")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true", default=False, help="Enables debug output")
+    parser.add_option("--keyid", dest="keyid", type="int", help="Focuses on all the packages signed by the keyid provided. Only use if you know already what keyid to remove - value to use changes from database to database.")
+    parser.add_option("--nullkeyid", dest="nullkeyid", action="store_true", default=False, help="Focuses on all packages with no key id")
     (options, args) = parser.parse_args()
     channel_arch = getChannelArch(options.arch)
     global verbose 
@@ -188,7 +252,12 @@ def main(versioninfo):
             else:
                 print "unable to create the channel "+options.destChannel+" as arch "+options.arch+" ; stopping here"
                 raise
-        ids = gen_idlist()
+        if options.keyid == None and not options.nullkeyid:
+            ids = gen_idlist()
+        elif options.nullkeyid:
+            ids = gen_idlist_for_keyid()
+        else:
+            ids = gen_idlist_for_keyid(options.keyid)
         if len(ids) == 0:
             print "nothing to do"
         else:
