@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.4"
+__version__ = "0.4a"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "prod"
@@ -82,7 +82,7 @@ def gen_idlist_for_keyid(keyid = None):
         and     rp.name_id = rpn.id
         and     rp.evr_id = rpe.id
         and     rp.package_arch_id = rpa.id
-        and     rpk.id = :keyid
+        and     rpk.id = """+str(keyid)+"""
         """
     else:
         # query to select all packages with no keyid - will probably not return anything. Will probably never be used, but if it's required it's already there
