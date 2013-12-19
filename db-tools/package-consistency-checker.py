@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.4a"
+__version__ = "0.5"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "prod"
@@ -51,6 +51,13 @@ class RHNSConnection:
         if not self.closed :
             self.client.auth.logout(self.key)
         pass
+
+def gen_idlist_from_paths(pathfile):
+    """generates the list of package IDs from a file with all paths inside it."""
+    #TODO finish this
+    return list_ids
+
+
 
 def gen_idlist_for_keyid(keyid = None):
     """generates the list of package IDs that have a certain keyid or no keyid if it is None"""
