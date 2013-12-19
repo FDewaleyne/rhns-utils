@@ -303,11 +303,15 @@ def filterPackagesByArch(ids,arch,conn):
     testarchs = matchArch(arch)
     filtered_ids = []
     for id in ids:
-        details = conn.client.packages.getDetails(conn.key, id)
-        if verbose:
-            print str(id)+" : "+details['name']+'-'+details['version']+'-'+details['release']+'.'+details['epoch']+'.'+details['arch_label']
-        if details['arch_label'] in testarchs:
-            filtered_ids.append(id)
+        try:
+            details = conn.client.packages.getDetails(conn.key, id)
+            if verbose:
+                print str(id)+" : "+details['name']+'-'+details['version']+'-'+details['release']+'.'+details['epoch']+'.'+details['arch_label']
+            if details['arch_label'] in testarchs:
+                filtered_ids.append(id)
+        except:
+            print "unable to find package id "+str(id)+", ignoring it and continueing"
+            pass 
     return filtered_ids
 
 #the main function of the program
