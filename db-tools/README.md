@@ -5,7 +5,7 @@ Database related scripts
 
 ---
 
-All these scripts are not meant to be used without advise - backup the db before using any.
+_All of these scripts are meant to be used with advise and while understanding their impact on the satellite - backup the db before using any._
 
 ---
 **package-consistency-checker.py**
