@@ -54,9 +54,94 @@ class RHNSConnection:
 
 def gen_idlist_from_paths(pathfile):
     """generates the list of package IDs from a file with all paths inside it."""
-    #TODO finish this
+    import sys
+    sys.path.append("/usr/share/rhn")
+    try:
+            import spacewalk.common.rhnConfig as rhnConfig
+            import spacewalk.server.rhnSQL as rhnSQL
+    except ImportError:
+        try:
+            import common.rhnConfig as rhnConfig
+            import server.rhnSQL as rhnSQL
+        except ImportError:
+            print "Couldn't load the libraries required to connect to the db"
+            sys.exit(1)
+
+    rhnConfig.initCFG()
+    rhnSQL.initDB()
+    query = """
+                select id from rhnpackage where path like :apath
+    """
+    #read the file
+    pkglistfile=open(options.file,"rb")
+    pkgline=pkglistfile.readline()
+    pkgpaths=[]
+    while pkgline:
+        pkgpaths.append(pkgline.rstrip("\n"))
+        pkgline=pkglistfile.readline()
+    pkglistfile.close()
+    #init the db, init the list
+    list_ids = []
+    cursor = rhnSQL.prepare(query)
+    for apath in pkgpaths:
+        cursor.execute(apath=apath)
+        rows = cursor.fetchall_dict()
+        if not rows is None:
+            c = 0
+            for row in rows:
+                c += 1
+                list_ids.append(row['id'])
+                print "\r%s of %s" % (str(c), str(len(rows))),
+            print ""
+        else:
+            print "no entry found for "
     return list_ids
 
+def gen_idlist_from_keyid_by_packageid(packageid):
+    """docstring for gen_idlist_from_keyid_by_packageid"""
+    import sys
+    sys.path.append("/usr/share/rhn")
+    try:
+            import spacewalk.common.rhnConfig as rhnConfig
+            import spacewalk.server.rhnSQL as rhnSQL
+    except ImportError:
+        try:
+            import common.rhnConfig as rhnConfig
+            import server.rhnSQL as rhnSQL
+        except ImportError:
+            print "Couldn't load the libraries required to connect to the db"
+            sys.exit(1)
+
+    rhnConfig.initCFG()
+    rhnSQL.initDB()
+    query = """
+                select  rpka.package_id as "id", rpn.name||'-'||rpe.version||'-'||rpe.release||'.'||rpa.label as package,
+                rpka.key_id, rpk.key_id as signing_key,
+                coalesce((select name from rhnpackageprovider rpp where rpp.id = rpk.provider_id),'Unknown') as provider,
+                rpka.created, rpka.modified
+        from    rhnpackagekeyassociation rpka, rhnpackage rp, rhnpackagename rpn, rhnpackagekey rpk, rhnpackageevr rpe, rhnpackagearch rpa,
+                (select key_id from rhnpackagekeyassociation where package_id = """+str(packageid)+""" ) pkginfo
+        where   rpka.package_id = rp.id
+        and     rpka.key_id = rpk.id
+        and     rp.name_id = rpn.id
+        and     rp.evr_id = rpe.id
+        and     rp.package_arch_id = rpa.id
+        and     rpk.id = pkginfo.key_id 
+    """
+    cursor = rhnSQL.prepare(query)
+    cursor.execute()
+    rows = cursor.fetchall_dict()
+    list_ids = []
+    if not rows is None:
+        c = 0
+        for row in rows:
+            c += 1
+            list_ids.append(row['id'])
+            print "\r%s of %s" % (str(c), str(len(rows))),
+        print ""
+    else:
+        print "no packages found"
+    return list_ids
 
 
 def gen_idlist_for_keyid(keyid = None):
@@ -237,6 +322,8 @@ def main(versioninfo):
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true", default=False, help="Enables debug output")
     parser.add_option("--keyid", dest="keyid", type="int", help="Focuses on all the packages signed by the keyid provided. Only use if you know already what keyid to remove - value to use changes from database to database.")
     parser.add_option("--nullkeyid", dest="nullkeyid", action="store_true", default=False, help="Focuses on all packages with no key id")
+    parser.add_option("--packageid", dest="packageid", type="int", help="Focuses on the packages with the same signature as this package")
+    parser.add_option("--packagefile", dest="packagefile", type="string", help="Focuses on the packages with a path identical to the entries in a file")
     (options, args) = parser.parse_args()
     channel_arch = getChannelArch(options.arch)
     global verbose 
@@ -259,12 +346,17 @@ def main(versioninfo):
             else:
                 print "unable to create the channel "+options.destChannel+" as arch "+options.arch+" ; stopping here"
                 raise
-        if options.keyid == None and not options.nullkeyid:
-            ids = gen_idlist()
-        elif options.nullkeyid:
+        if options.packageid != None :
+            ids = gen_idlist_from_keyid_by_packageid(options.packageid)
+        elif options.nullkeyid :
             ids = gen_idlist_for_keyid()
-        else:
+        elif options.keyid != None:
             ids = gen_idlist_for_keyid(options.keyid)
+        elif options.packagefile != None:
+            ids = gen_idlist_from_paths(options.packagefile)
+        else:
+            #default mode, filter packages present in duplicate as beta and regular but also packages with null paths
+            ids = gen_idlist()
         if len(ids) == 0:
             print "nothing to do"
         else:
