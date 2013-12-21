@@ -36,7 +36,7 @@ class RHNSConnection:
         URL = "https://%s/rpc/api" % host
         self.client = xmlrpclib.Server(URL)
         self.key = self.client.auth.login(username,password)
-        self.usernams = username
+        self.username = username
         self.host = host
         pass
 
