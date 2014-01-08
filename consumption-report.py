@@ -6,7 +6,7 @@ __license__ = "GPL"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "prod"
-__version__ = "0.10"
+__version__ = "1.0"
 
 #dumps the consumption of the satellite along with how many subscriptions are unused but assgned to a custom channel
 #confirmed to work for 5.4, and 5.3, will not work with 5.2.
@@ -23,6 +23,7 @@ __version__ = "0.10"
 # V0.8 by FDewaleyne - 18-06-2013 - update to the session init to be able to take settings in option
 # V0.9 by FDewaleyne - 18-06-2013 - handling of organizations added
 # V0.10 by FDewaleyne - 01-08-2013 - tests finished, script now stable all features working but syslist
+# V1.0 by FDewaleyne - 08-01-2014 - add verbosity support, finish implementing existing org content listing calls
 
 import xmlrpclib, os, ConfigParser, re, sys, getpass
 
@@ -77,6 +78,7 @@ def session_init(orgname='baseorg', settings={} ):
 def general_consumption(key):
     """ displays the general consumtion information of the satellite """
     global client;
+    global verbose;
     print("\n")
     print("%s" % ("[=================================[system  entitlements]===========================]"))
     print("%44s %s %s %s %s %s" % ("Entitlement Label", "   Total  ", " Used ", "Allocated", "Unallocated", "Unused"))
@@ -85,7 +87,8 @@ def general_consumption(key):
         try:
             print("%44s %8s %6s %9s %11s %6s" % (entry['label'], str(entry['unallocated']+entry['allocated']), str(entry['used']), str(entry['allocated']), str(entry['unallocated']),  str(entry['free'])))
         except:
-            sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping\n")
+            if verbose:
+                sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping\n")
             continue
     print("\n")
     print("%s" % ("[================================[software   entitlements]================================]"))
@@ -98,35 +101,46 @@ def general_consumption(key):
                 # only print flex entries if they exist
                 print("%44s %6s %8s %6s %9s %11s %6s" % (entry['label'], " Flex ", str(entry['unallocated_flex']+entry['allocated_flex']), str(entry['used_flex']) ,str(entry['allocated_flex']), str(entry['unallocated_flex']),  str(entry['free_flex'])))
         except:
-            sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.\n")
+            if verbose:
+                sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.\n")
             continue
 
 def org_consumtion(key,orgid):
     """displays the consumption information for one org"""
     global client;
+    global verbose;
+    print "Consumption for organization "+str(orgid)+":"
     #TODO : figure out what Free is for an organization here.
     print("\n")
+    #allocated is total so not required
     print("%s" % ("[=================================[system  entitlements]===========================]"))
-    print("%44s %s %s %s %s %s" % ("Entitlement Label", "   Total  ", " Used ", "Allocated", "Unallocated", " Free "))
-    print("%44s %s %s %s %s %s" % ("-----------------", "----------", "------", "---------", "-----------", "------"))
+    print("%44s %s %s %s" % ("Entitlement Label", "   Total  ", " Used ", " Free "))
+    print("%44s %s %s %s" % ("-----------------", "----------", "------", "------"))
     for entry in client.org.listSystemEntitlementsForOrg(key,orgid):
         try:
-            print("%44s %8s %6s %9s %11s %6s" % (entry['label'], str(entry['unallocated']+entry['allocated']), str(entry['used']), str(entry['allocated']), str(entry['unallocated']),  str(entry['free'])))
+            #do not add unallocated and allocated for total because here unallocated is the number of subsriptions not allocated to the organization
+            #don't display entitlements not allocated unless verbosity is active
+            if verbose or entry['allocated'] > 0:
+                print("%44s %8s %6s %6s" % (entry['label'], str(entry['allocated']), str(entry['used']), str(entry['free'])))
         except:
-            sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping\n")
+            if verbose:
+                sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping\n")
             continue
     print("\n")
     print("%s" % ("[================================[software   entitlements]================================]"))
-    print("%44s %s %s %s %s %s %s" % ("Entitlement Label"," Flex ", "   Total  ", " Used ", "Allocated", "Unallocated", " Free "))
-    print("%44s %s %s %s %s %s %s" % ("-----------------","------", "----------", "------", "---------", "-----------", "------"))
+    print("%44s %s %s %s %s" % ("Entitlement Label"," Flex ", "   Total  ", " Used ", " Free "))
+    print("%44s %s %s %s %s" % ("-----------------","------", "----------", "------", "------"))
     for entry in client.org.listSoftwareEntitlementsForOrg(key,orgid):
         try:
-            print("%44s %6s %8s %6s %9s %11s %6s" % (entry['label'], "", str(entry['unallocated']+entry['allocated']), str(entry['used']) ,str(entry['allocated']), str(entry['unallocated']),  str(entry['free'])))
+            if verbose or entry['allocated'] > 0:
+                print("%44s %6s %8s %6s %6s" % (entry['label'], "", str(entry['allocated']), str(entry['used']) , str(entry['free'])))
             if 'used_flex' in entry and 'free_flex' in entry:
                 # only print flex entries if they exist
-                print("%44s %6s %8s %6s %9s %11s %6s" % (entry['label'], " Flex ", str(entry['unallocated_flex']+entry['allocated_flex']), str(entry['used_flex']) ,str(entry['allocated_flex']), str(entry['unallocated_flex']),  str(entry['free_flex'])))
+                if entry['allocated_flex'] > 0 or verbose :
+                    print("%44s %6s %8s %6s %6s" % (entry['label'], " Flex ", str(entry['allocated_flex']), str(entry['used_flex']) ,  str(entry['free_flex'])))
         except:
-            sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.\n")
+            if verbose:
+                sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.\n")
             continue
     pass
 
@@ -134,6 +148,7 @@ def org_consumtion(key,orgid):
 def list_entitlements(key):
     """ displays the list of entitlements for the satellite """
     global client;
+    global verbose;
     print("\n")
     print("%s" % ("[=================================[system  entitlements]===========================]"))
     print("%44s %s %s " % ("Entitlement Label", "|", " Entitlement Name"))
@@ -142,7 +157,8 @@ def list_entitlements(key):
         try:
             print("%44s %s %s" % (entry['label'], "|", entry['name']))
         except:
-            sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping\n")
+            if verbose:
+                sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping\n")
             continue
     print("\n")
     print("%s" % ("[================================[software   entitlements]================================]"))
@@ -155,12 +171,14 @@ def list_entitlements(key):
             #    # only print flex entries if they exist
             #    print("%44s %6s %8s %9s %11s %6s" % (entry['label'], " Flex ", str(entry['unallocated_flex']+entry['allocated_flex']), str(entry['allocated_flex']), str(entry['unallocated_flex']),  str(entry['free_flex'])))
         except:
-            sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.")
+            if verbose:
+                sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.")
             continue
 
 def get_entitlement(key, label):
     """returns the consumption details for one entitlement"""
     global client;
+    global verbose;
     print ("\n")
     #populates entitlements from the list of system entitlements then adds the software entitlements to the list
     entitlements = client.org.listSystemEntitlements(key) + client.org.listSoftwareEntitlements(key)
@@ -175,7 +193,8 @@ def get_entitlement(key, label):
                     # only print flex entries if they exist
                     print("%44s %6s %8s %6s %9s %11s %6s" % (entry.get('label',0), " Flex ", str(entry.get('unallocated_flex',0)+entry.get('allocated_flex',0)), str(entry.get('used_flex',0)) ,str(entry.get('allocated_flex',0)), str(entry.get('unallocated_flex',0)),  str(entry.get('free_flex',0))))
             except:
-                sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.\n")
+                if verbose:
+                    sys.stderr.write("error handling "+entry['label']+" aka "+entry['name']+", skipping.\n")
                 continue
             break
 
@@ -184,17 +203,21 @@ def get_entitlement(key, label):
 
 def main(version):
     """main function - takes in the options and selects the behaviour"""
+    global verbose;
     import optparse
     parser = optparse.OptionParser("usage : %prog [-e \"entitlement_label\" [-s]] [-o orgid] [-l]\n by default displays the general consumption information of the satellite", version=version)
     parser.add_option("-e", "--entitlement", dest="entitlement", default=None, help="Displays the allocation details of that entitlement for all sub organizations. Use a label ; Does not work pre satellite 5.3")
     parser.add_option("-s", "--syslist", dest="syslist", action="store_true", default=False, help="Displays the systems in the organization of the user consuming that entitlement at the moment")
     parser.add_option("-l", "--list", dest="entlist", action="store_true", default=False, help="Displays the entitlements available on the satellite and their names")
-    parser.add_option("-o", "--orgid", dest="orgid", default=None, help="Number of the organization to report entitlements for ; not implemented yet")
+    parser.add_option("-o", "--orgid", dest="orgid",type="int", default=None, help="Number of the organization to report entitlements for")
     parser.add_option("--url", dest="saturl",default=None, help="URL of the satellite api, e.g. https://satellite.example.com/rpc/api or http://127.0.0.1/rpc/api ; can also be just the hostname or ip of the satellite. Facultative.")
     parser.add_option("--user", dest="satuser",default=None, help="username to use with the satellite. Should be admin of the organization owning the channels. Faculative.")
     parser.add_option("--password", dest="satpwd",default=None, help="password of the user. Will be asked if not given and not in the configuration file.")
     parser.add_option("--org", dest="satorg", default="baseorg", help="name of the organization to use - design the section of the config file to use. Facultative, defaults to %default")
+    parser.add_option("-v","--verbose",dest="verbose",default=False,action="store_true",help="activate verbose output")
     (options, args) = parser.parse_args()
+    #set verbosity globally
+    verbose = options.verbose
     if options.entlist:
         key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
         list_entitlements(key)
@@ -203,6 +226,13 @@ def main(version):
         key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
         get_entitlement(key,options.entitlement)
         client.auth.logout(key)
+    elif options.orgid != None:
+        if options.syslist:
+            parser.error("not implemented yet")
+        else:
+            key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
+            org_consumtion(key,options.orgid) 
+            client.auth.logout(key)
     elif options.syslist:
         if options.entitlement == None:
             parser.error('you forgot to select an entitlement')
