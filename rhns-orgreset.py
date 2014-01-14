@@ -58,7 +58,7 @@ class RHNSConnection:
                 if re.search('^http(s)?://', self.url) == None:
                     self.url = "https://"+self.url
                 if re.search('/rpc/api$', self.url) == None:
-                    URL = URL+"/rpc/api"
+                    self.url = self.url+"/rpc/api"
             #if this is the url then nothing has to be done further to URL
         #TODO: fix this and create a snippet with the connector / source for all to import
         #self.host = host
