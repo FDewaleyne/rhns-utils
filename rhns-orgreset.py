@@ -182,13 +182,13 @@ def main(version):
     connect_group.add_option("--orgname", dest="orgname", default="baseorg", help="the name of the organization to use as per your configuration file - defaults to baseorg")
     # action options
     action_group = optparse.OptionGroup(parser, "Action options", "One of --all or an --entitlement ENTITLEMENT_LABEL is required")
-    action_group.add_option("-a","--all", dest='all', action='store_true', default=False, help="Resets all entitlements to the consumed values for all sub organizations")
+    action_group.add_option("-a","--all", dest='all', action='store_true', default=False, help="Resets all entitlements to the consumed values for the sub organizations")
     action_group.add_option('-e','--entitlement', dest='entitlements', action='append', help='Entitlement to reset - one time per entitlement or system addon')
-    action_group.add_option('-g','--orgid', dest='orgid', action='append', type='int', help='Limit the reset to the organizations with that id - can be used multiple times')
+    action_group.add_option('-g','--orgid', dest='orgid', action='append', type='int', help='Limit the reset to the organizations with that id - can be used multiple times. If omitted will reset all sub organizations.')
     parser.add_option_group(action_group)
     parser.add_option_group(connect_group)
     (options, args) = parser.parse_args()
-    if options.all and options.entitlements != None:
+    if options.all or options.entitlements != None:
         conn = RHNSConnection(options.satuser,options.satpwd,options.saturl,options.orgname)
         reset_allocation(conn, options.orgid, options.entitlements)
         conn.client.auth.logout(conn.key)
