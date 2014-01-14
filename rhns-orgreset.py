@@ -91,7 +91,7 @@ class RHNSConnection:
         self.client = xmlrpclib.Server(self.url)
         self.key = self.client.auth.login(self.username,self.__password)
         try:
-            self.satver = client.api.systemVersion()
+            self.satver = self.client.api.systemVersion()
             print "satellite version "+self.satver
         except:
             self.satver = None
@@ -126,7 +126,7 @@ def clean_allocation(conn,orgid,entitlements):
         ALL_ENTITLEMENTS = True
         ALL_SYSADDONS = True
     else:
-        for entry in entitlements:
+        for entitlement in entitlements:
             if entitlement in ['monitoring_entitled','enterprise_entitled','provisioning_entitled','virtualization_host','virtualization_host_platform']:
                 SYS_ADDONS.append(entitlement)
             else:
@@ -167,7 +167,9 @@ def clean_allocation(conn,orgid,entitlements):
                        conn.client.org.setSystemEntitlements(conn.key,org['id'],element['label'],element['used'])
                     except:
                        sys.stderr.write("unable to reset "+element['label']+"\n")
-            print "finished working on "+str(org['id'])+', '+org['name']
+            print "Finished working on Org "+str(org['id'])+', '+org['name']
+        else:
+            print "Skpping Org 1 - the base organization isn't affected by resets"
 
 
 def main(version):
@@ -190,7 +192,7 @@ def main(version):
     (options, args) = parser.parse_args()
     if options.all or options.entitlements != None:
         conn = RHNSConnection(options.satuser,options.satpwd,options.saturl,options.orgname)
-        reset_allocation(conn, options.orgid, options.entitlements)
+        clean_allocation(conn, options.orgid, options.entitlements)
         conn.client.auth.logout(conn.key)
     else:
         #then no action is asked, exit
