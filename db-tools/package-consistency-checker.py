@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.5"
+__version__ = "0.6a"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "prod"
@@ -313,6 +313,37 @@ def filterPackagesByArch(ids,arch,conn):
             print "unable to find package id "+str(id)+", ignoring it and continueing"
             pass 
     return filtered_ids
+
+def create_channel(prefix, arch, conn, attemptnb=0):
+    """creates a channel of label X+Y for arch Y and prefix X all generated from the details passed"""
+    #to create multiple channels depending on the archs needed. returns the label of the arch created.
+    label = prefix + conn
+    if attemptnb > 0 :
+        label = label + "_" + str(attemptnb)
+    try:
+        conn.client.channel.software.create(conn.key,label,label,arch,"", "sha1")
+    except:
+        cdetails = conn.client.channel.software.getDetails(conn.key,label)
+        if arch == cdetails['arch_name'] :
+            print "unable to create the channel "+options.destChannel
+            if attemptnb < 10:
+                print "attempting to create another channel by appending "+str(attemptnb+1)
+                label = create_channel(label_prefix, arch, conn, attemptnb+1)
+                pass
+            else:
+                print "unable to create another channel after 10 attempts, giving up"
+                raise
+        else:
+            #then the channel exists but has the wrong arch
+            print "unable to create the channel "+options.destChannel+" as arch "+options.arch
+            if attemptnb < 10:
+                print "attempting to create another channel by appending "+str(attemptnb+1)
+                label = create_channel(label_prefix, arch, conn, attemptnb+1)
+                pass
+            else:
+                print "unable to create another channel after 10 attempts, giving up"
+                raise
+    return label
 
 #the main function of the program
 def main(versioninfo):
