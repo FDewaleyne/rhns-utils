@@ -4,7 +4,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "2.0"
+__version__ = "2.2"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "stable"
@@ -58,7 +58,7 @@ class RHNSConnection:
                 if re.search('^http(s)?://', self.url) == None:
                     self.url = "https://"+self.url
                 if re.search('/rpc/api$', self.url) == None:
-                    URL = URL+"/rpc/api"
+                    self.url = self.url+"/rpc/api"
             #if this is the url then nothing has to be done further to URL
         #TODO: fix this and create a snippet with the connector / source for all to import
         #self.host = host
@@ -91,7 +91,7 @@ class RHNSConnection:
         self.client = xmlrpclib.Server(self.url)
         self.key = self.client.auth.login(self.username,self.__password)
         try:
-            self.satver = client.api.systemVersion()
+            self.satver = self.client.api.systemVersion()
             print "satellite version "+self.satver
         except:
             self.satver = None
@@ -126,7 +126,7 @@ def clean_allocation(conn,orgid,entitlements):
         ALL_ENTITLEMENTS = True
         ALL_SYSADDONS = True
     else:
-        for entry in entitlements:
+        for entitlement in entitlements:
             if entitlement in ['monitoring_entitled','enterprise_entitled','provisioning_entitled','virtualization_host','virtualization_host_platform']:
                 SYS_ADDONS.append(entitlement)
             else:
@@ -167,7 +167,9 @@ def clean_allocation(conn,orgid,entitlements):
                        conn.client.org.setSystemEntitlements(conn.key,org['id'],element['label'],element['used'])
                     except:
                        sys.stderr.write("unable to reset "+element['label']+"\n")
-            print "finished working on "+str(org['id'])+', '+org['name']
+            print "Finished working on Org "+str(org['id'])+', '+org['name']
+        else:
+            print "Skpping Org 1 - the base organization isn't affected by resets"
 
 
 def main(version):
@@ -182,15 +184,15 @@ def main(version):
     connect_group.add_option("--orgname", dest="orgname", default="baseorg", help="the name of the organization to use as per your configuration file - defaults to baseorg")
     # action options
     action_group = optparse.OptionGroup(parser, "Action options", "One of --all or an --entitlement ENTITLEMENT_LABEL is required")
-    action_group.add_option("-a","--all", dest='all', action='store_true', default=False, help="Resets all entitlements to the consumed values for all sub organizations")
+    action_group.add_option("-a","--all", dest='all', action='store_true', default=False, help="Resets all entitlements to the consumed values for the sub organizations")
     action_group.add_option('-e','--entitlement', dest='entitlements', action='append', help='Entitlement to reset - one time per entitlement or system addon')
-    action_group.add_option('-g','--orgid', dest='orgid', action='append', type='int', help='Limit the reset to the organizations with that id - can be used multiple times')
+    action_group.add_option('-g','--orgid', dest='orgid', action='append', type='int', help='Limit the reset to the organizations with that id - can be used multiple times. If omitted will reset all sub organizations.')
     parser.add_option_group(action_group)
     parser.add_option_group(connect_group)
     (options, args) = parser.parse_args()
-    if options.all and options.entitlements != None:
+    if options.all or options.entitlements != None:
         conn = RHNSConnection(options.satuser,options.satpwd,options.saturl,options.orgname)
-        reset_allocation(conn, options.orgid, options.entitlements)
+        clean_allocation(conn, options.orgid, options.entitlements)
         conn.client.auth.logout(conn.key)
     else:
         #then no action is asked, exit
