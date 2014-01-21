@@ -79,38 +79,62 @@ def get_childs(key,systemid):
     data = client.system.listSubscribedChildChannels(key,systemid)
     childs = []
     for channel in data:
-        childs.append(channel['label']
+        childs.append(channel['label'])
     return childs
 
 def set_channels(key,systemid,base,childs):
-    """sets the channels or displays an error indicating that the operation failed, then offers to continue or retry. childs needs to be None or a list."""
+    """sets the channels or displays an error indicating that the operation failed, then offers to continue or retry. childs needs to be None or a list.
+       depending on the None arguments used on base and childs, decides to try only the elements that are not none"""
     global client
     print "Working on system "+str(systemid)
-    try:
-        client.system.setBaseChannel(key,systemid,base)
-        print "\tBase channel restored to "+base
-    except e:
-        print "unable to reattach the base channel with the reason"
-        print str(e) 
-        while True:
-            answer = raw_input("Do you want to continue, retry or stop? (c, r, [s])").strip()
-            if answer == 'c':
-                print "Failed to assign to the base channel "+base
-                print "continueing with the child channels"
-                pass
-            elif answer == 'r':
-                set_channels(systemid,base,None)
-                pass
-            else:
-                raise
+    #add management if we aren't in a retry loop for base or childs
+    if base != None and childs != None :
+        try:
+            client.system.upgradeEntitlement(key,systemid,"enterprise_entitled")
+        except e:
+            while True:
+                print "Unable to assign a management entitmenet to the system with reason"
+                print str(e)
+                answer = raw_input("Do you want to continue, retry or stop? (c, r, [s])").strip()
+                if answer == 'c':
+                    print "Failed to assign to the base channel "+base
+                    print "continueing with the child channels"
+                    pass
+                elif answer == 'r':
+                    #enter the retry condition for entitlements
+                    set_channels(key,systemid,None,None)
+                    pass
+                else:
+                    raise
+    #reassign the base channel if not a retry loop out of base ; childs can be None or another value. need to be able to continue on the first run too.
+    if base != None:
+        try:
+            client.system.setBaseChannel(key,systemid,base)
+            print "\tBase channel restored to "+base
+        except e:
+            while True:
+                print "unable to reattach the base channel with the reason"
+                print str(e) 
+                answer = raw_input("Do you want to continue, retry or stop? (c, r, [s])").strip()
+                if answer == 'c':
+                    print "Failed to assign to the base channel "+base
+                    print "continueing with the child channels"
+                    pass
+                elif answer == 'r':
+                    #enter the retry condition for base
+                    set_channels(key,systemid,base,None)
+                    pass
+                else:
+                    raise
+    #add childs if there are any
     if childs != None and len(childs) > 0:
         try:
             client.system.setChildChannels(key,systemid,childs)
             print "\tChild channels restored to "+str(childs)
         except e:
-            print "unable to reattach the child channels with the reason"
-            print str(e)
             while True:
+                print "unable to reattach the child channels with the reason"
+                print str(e)
                 answer = raw_input("Do you want to continue, retry or stop? (c, r, [s])").strip()
                 if answer == 'c':
                     print "Failed to alter this system with child channels"
@@ -118,11 +142,21 @@ def set_channels(key,systemid,base,childs):
                         print "\t"+channel
                     pass
                 elif answer == 'r':
-                    set_channels(systemid,base,None)
+                    #enter the retry condition for childs
+                    set_chanels(key,systemid,None,childs) 
                     pass
                 else:
                     raise
     return
+
+def process_group(key,groupname):
+    """processes the list of systems in the group of that name"""
+    global client
+    data = client.systemgroup.listSystems(key,groupname)
+    for system in data:
+        base = get_base(key,system['id'])
+        childs = get_childs(key,system['id'])
+
 
 def main(version):
     """main function - takes in the options and selects the behaviour"""
