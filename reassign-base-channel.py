@@ -5,8 +5,8 @@ __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
-__status__ = "dev"
-__version__ = "0.01"
+__status__ = "prod"
+__version__ = "1.0"
 
 ###
 #
