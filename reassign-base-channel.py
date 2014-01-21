@@ -13,14 +13,10 @@ __version__ = "0.01"
 # Script to detect the base channel to attach from the version of RHEL installed. 
 #
 ###
-
-### Basic matching rules set here superseed detection. if the package listed on the left is in, use the channel on the right.
-#TODO:replace this with something more elegant and dynamic
-#sample
-#OVERRIDE_MATCH={"package-version-release-arch": "channellabel",
-#                "package2-version-release-arch": "channellabel"}
-OVERRIDE_MATCH={}
-#TODO: handle detection per "profile of packages"
+# To the extent possible under law, Red Hat, Inc. has dedicated all copyright to this software to the public domain worldwide, pursuant to the CC0 Public Domain Dedication. 
+# This software is distributed without any warranty.  See <http://creativecommons.org/publicdomain/zero/1.0/>.
+###
+# NOTE: this version supposes the systems still are subscribed to their channels when listing the channels through certain api calls
 
 import xmlrpclib, os, ConfigParser, re, sys, getpass
 
@@ -71,6 +67,56 @@ def session_init(orgname='baseorg', settings={} ):
     # removes the password from memory
     del SATELLITE_PASSWORD
     return key
+
+def get_base(key,systemid):
+    """gathers the data on what base channel should be set"""
+    pass
+
+def get_childs(key,systemid):
+    """gathers the list of child channels that should be set"""
+    pass
+
+def set_channels(key,systemid,base,childs):
+    """sets the channels or displays an error indicating that the operation failed, then offers to continue or retry. childs needs to be None or a list."""
+    global client
+    print "Working on system "+str(systemid)
+    try:
+        client.system.setBaseChannel(key,systemid,base)
+        print "\tBase channel restored to "+base
+    except e:
+        print "unable to reattach the base channel with the reason"
+        print str(e) 
+        while True:
+            answer = raw_input("Do you want to continue, retry or stop? (c, r, [s])").strip()
+            if answer == 'c':
+                print "Failed to assign to the base channel "+base
+                print "continueing with the child channels"
+                pass
+            elif answer == 'r':
+                set_channels(systemid,base,None)
+                pass
+            else:
+                raise
+    if childs != None and len(childs) > 0:
+        try:
+            client.system.setChildChannels(key,systemid,childs)
+            print "\tChild channels restored to "+str(childs)
+        except e:
+            print "unable to reattach the child channels with the reason"
+            print str(e)
+            while True:
+                answer = raw_input("Do you want to continue, retry or stop? (c, r, [s])").strip()
+                if answer == 'c':
+                    print "Failed to alter this system with child channels"
+                    for channel in childs:
+                        print "\t"+channel
+                    pass
+                elif answer == 'r':
+                    set_channels(systemid,base,None)
+                    pass
+                else:
+                    raise
+    return
 
 def main(version):
     """main function - takes in the options and selects the behaviour"""
