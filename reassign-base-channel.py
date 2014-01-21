@@ -97,8 +97,8 @@ def set_channels(key,systemid,base,childs):
                 print str(e)
                 answer = raw_input("Do you want to continue, retry or stop? (c, r, [s])").strip()
                 if answer == 'c':
-                    print "Failed to assign to the base channel "+base
-                    print "continueing with the child channels"
+                    print "Failed to assign a management entitlement"
+                    print "continueing with the Base channel"
                     pass
                 elif answer == 'r':
                     #enter the retry condition for entitlements
