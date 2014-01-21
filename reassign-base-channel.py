@@ -6,7 +6,7 @@ __license__ = "GPL"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "prod"
-__version__ = "1.0"
+__version__ = "1.1"
 
 ###
 #
@@ -149,16 +149,20 @@ def set_channels(key,systemid,base,childs):
                     raise
     return
 
-def process_group(key,groupname):
+def process_group(key,groupname,convertflex):
     """processes the list of systems in the group of that name"""
     global client
+    ids = []
     data = client.systemgroup.listSystems(key,groupname)
     print "processing group "+groupname
     for system in data:
         base = get_base(key,system['id'])
         childs = get_childs(key,system['id'])
+        ids.append(system['id'])
         set_channels(key,system['id'],base,childs)
     print "finished processing the group"
+    if convertflex and len(ids) > 0:
+        client.system.convertToFlexEntitlement(key,ids)
 
 def list_groups(key):
     """displays a list of all groups"""
@@ -174,13 +178,11 @@ def main(version):
     """main function - takes in the options and selects the behaviour"""
     global verbose;
     import optparse
-    parser = optparse.OptionParser("%prog -s SYSID | -g GROUPNAME | -l\n by default displays the general consumption information of the satellite", version=version)
+    parser = optparse.OptionParser("%prog -s SYSID|-g GROUPNAME|-l [--flex]\n reassigns their entitlements to systems (based on the information pulled by the api for that system)", version=version)
     parser.add_option("-s", "--systemid", dest="systemid", type='int',default=None, help="attempt to reassign entitlements to a single system")
     parser.add_option("-g", "--group", dest="groupname",default=None, help="attempt to reassign entitlements to a system group")
-    #parser.add_option("-e", "--entitlement", dest="entitlement", default=None, help="Displays the allocation details of that entitlement for all sub organizations. Use a label ; Does not work pre satellite 5.3")
-    #parser.add_option("-s", "--syslist", dest="syslist", action="store_true", default=False, help="Displays the systems in the organization of the user consuming that entitlement at the moment")
     parser.add_option("-l", "--list", dest="grouplist", action="store_true", default=False, help="Displays the list of groups you have access to")
-    #parser.add_option("-o", "--orgid", dest="orgid",type="int", default=None, help="Number of the organization to report entitlements for")
+    parser.add_option("-f", "--flex", dest="convertflex", action="store_true", default=False, help="indicates to try to convert to flex the systems")
     parser.add_option("-H", "--url", dest="saturl",default=None, help="URL of the satellite api, e.g. https://satellite.example.com/rpc/api or http://127.0.0.1/rpc/api ; can also be just the hostname or ip of the satellite. Facultative.")
     parser.add_option("-U", "--user", dest="satuser",default=None, help="username to use with the satellite. Should be admin of the organization owning the channels. Faculative.")
     parser.add_option("-P", "--password", dest="satpwd",default=None, help="password of the user. Will be asked if not given and not in the configuration file.")
@@ -198,10 +200,18 @@ def main(version):
         base = get_base(key,options.systemid)
         childs = get_childs(key,options.systemid)
         set_channels(key,options.systemid,base,childs)
+        if options.convertflex:
+            print "attempting flex conversion"
+            try:
+                client.system.convertToFlexEntitlement(key,[options.systemid])
+            except e:
+                print "conversion failed with"
+                print str(e)
+                pass
         client.auth.logout(key)
     elif options.groupname != None:
         key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
-        process_group(key,options.groupname)
+        process_group(key,options.groupname,options.convertflex)
         client.auth.logout(key)
     else:
         parser.error('incorrect usage - use --help or -h for more information')
