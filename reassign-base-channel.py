@@ -70,7 +70,9 @@ def session_init(orgname='baseorg', settings={} ):
 
 def get_base(key,systemid):
     """gathers the data on what base channel should be set"""
-    pass
+    global client
+    data = client.system.listSubscribableBaseChannels(key,systemid)
+    return data['label']
 
 def get_childs(key,systemid):
     """gathers the list of child channels that should be set"""
