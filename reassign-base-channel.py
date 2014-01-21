@@ -76,7 +76,11 @@ def get_base(key,systemid):
 
 def get_childs(key,systemid):
     """gathers the list of child channels that should be set"""
-    pass
+    data = client.system.listSubscribedChildChannels(key,systemid)
+    childs = []
+    for channel in data:
+        childs.append(channel['label']
+    return childs
 
 def set_channels(key,systemid,base,childs):
     """sets the channels or displays an error indicating that the operation failed, then offers to continue or retry. childs needs to be None or a list."""
