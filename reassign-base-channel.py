@@ -143,7 +143,7 @@ def set_channels(key,systemid,base,childs):
                     pass
                 elif answer == 'r':
                     #enter the retry condition for childs
-                    set_chanels(key,systemid,None,childs) 
+                    set_channels(key,systemid,None,childs) 
                     pass
                 else:
                     raise
@@ -153,55 +153,58 @@ def process_group(key,groupname):
     """processes the list of systems in the group of that name"""
     global client
     data = client.systemgroup.listSystems(key,groupname)
+    print "processing group "+groupname
     for system in data:
         base = get_base(key,system['id'])
         childs = get_childs(key,system['id'])
+        set_channels(key,system['id'],base,childs)
+    print "finished processing the group"
 
+def list_groups(key):
+    """displays a list of all groups"""
+    global client
+    data = client.systemgroup.listAllGroups(key)
+    print "There are "+str(len(data))+" groups:"
+    print ("%60s - %3s - %7s - %s " % ("Name", "Org", "Systems", "Description" ))
+    for group in data:
+        print ("%60s - %3s - %7s - %s" % (group['name'], str(group['org_id']) ,str(group['system_count']), group['description'] ))
+    pass
 
 def main(version):
     """main function - takes in the options and selects the behaviour"""
     global verbose;
     import optparse
-    parser = optparse.OptionParser("%prog [-e \"entitlement_label\" [-s]] [-o orgid] [-l]\n by default displays the general consumption information of the satellite", version=version)
+    parser = optparse.OptionParser("%prog -s SYSID | -g GROUPNAME | -l\n by default displays the general consumption information of the satellite", version=version)
+    parser.add_option("-s", "--systemid", dest="systemid", type='int',default=None, help="attempt to reassign entitlements to a single system")
+    parser.add_option("-g", "--group", dest="groupname",default=None, help="attempt to reassign entitlements to a system group")
     #parser.add_option("-e", "--entitlement", dest="entitlement", default=None, help="Displays the allocation details of that entitlement for all sub organizations. Use a label ; Does not work pre satellite 5.3")
     #parser.add_option("-s", "--syslist", dest="syslist", action="store_true", default=False, help="Displays the systems in the organization of the user consuming that entitlement at the moment")
-    #parser.add_option("-l", "--list", dest="entlist", action="store_true", default=False, help="Displays the entitlements available on the satellite and their names")
+    parser.add_option("-l", "--list", dest="grouplist", action="store_true", default=False, help="Displays the list of groups you have access to")
     #parser.add_option("-o", "--orgid", dest="orgid",type="int", default=None, help="Number of the organization to report entitlements for")
-    parser.add_option("--url", dest="saturl",default=None, help="URL of the satellite api, e.g. https://satellite.example.com/rpc/api or http://127.0.0.1/rpc/api ; can also be just the hostname or ip of the satellite. Facultative.")
-    parser.add_option("--user", dest="satuser",default=None, help="username to use with the satellite. Should be admin of the organization owning the channels. Faculative.")
-    parser.add_option("--password", dest="satpwd",default=None, help="password of the user. Will be asked if not given and not in the configuration file.")
-    parser.add_option("--org", dest="satorg", default="baseorg", help="name of the organization to use - design the section of the config file to use. Facultative, defaults to %default")
+    parser.add_option("-H", "--url", dest="saturl",default=None, help="URL of the satellite api, e.g. https://satellite.example.com/rpc/api or http://127.0.0.1/rpc/api ; can also be just the hostname or ip of the satellite. Facultative.")
+    parser.add_option("-U", "--user", dest="satuser",default=None, help="username to use with the satellite. Should be admin of the organization owning the channels. Faculative.")
+    parser.add_option("-P", "--password", dest="satpwd",default=None, help="password of the user. Will be asked if not given and not in the configuration file.")
+    parser.add_option("--org", dest="satorg", default="baseorg", help="name of the organization to use - refers to the section of the config file to use, not an org of the satellite. Facultative, defaults to %default")
     parser.add_option("-v","--verbose",dest="verbose",default=False,action="store_true",help="activate verbose output")
     (options, args) = parser.parse_args()
     #set verbosity globally
     verbose = options.verbose
-#    if options.entlist:
-        #key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
-        #list_entitlements(key)
-        #client.auth.logout(key)
-    #elif options.entitlement and not options.syslist:
-        #key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
-        #get_entitlement(key,options.entitlement)
-        #client.auth.logout(key)
-    #elif options.orgid != None:
-        #if options.syslist:
-            #parser.error("not implemented yet")
-        #else:
-            #key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
-            #org_consumtion(key,options.orgid) 
-            #client.auth.logout(key)
-    #elif options.syslist:
-        #if options.entitlement == None:
-            #parser.error('you forgot to select an entitlement')
-            #parser.print_help()
-        #else:
-            #parser.error('not implemented yet')
-   ##key = session_init()
-            ##client.auth.logout(key)
-    #else:
-        #key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
-        #general_consumption(key)
-        #client.auth.logout(key)
+    if options.grouplist:
+        key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
+        list_groups(key)
+        client.auth.logout(key)
+    elif options.systemid != None:
+        key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
+        base = get_base(key,options.systemid)
+        childs = get_childs(key,options.systemid)
+        set_channels(key,options.systemid,base,childs)
+        client.auth.logout(key)
+    elif options.groupname != None:
+        key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
+        process_group(key,options.groupname)
+        client.auth.logout(key)
+    else:
+        parser.error('incorrect usage - use --help or -h for more information')
 
 if __name__ == "__main__":
     main(__version__)
