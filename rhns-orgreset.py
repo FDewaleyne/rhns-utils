@@ -169,7 +169,7 @@ def clean_allocation(conn,orgid,entitlements):
                        sys.stderr.write("unable to reset "+element['label']+"\n")
             print "Finished working on Org "+str(org['id'])+', '+org['name']
         else:
-            print "Skpping Org 1 - the base organization isn't affected by resets"
+            print "Skipping Org 1 - the base organization isn't affected by resets"
 
 
 def main(version):
