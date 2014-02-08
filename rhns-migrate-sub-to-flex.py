@@ -197,15 +197,15 @@ def allocate_flex(conn,orgid,entitlements,novirt):
                                 pass
             #treating all entitlements, adding what is required to fix flex consumption.
             #this code will never be able to force systems that aren't detected as flex. it only makes sense to use the numbers we detected with the previous two runs
-            #TODO; update logic of this part to limit association to the current number if it is inferior to what is used + what we detected for flex and virt_hosts.
+            #This will not try to reduce to more than flex used and let's not allocate all the usage either. it won't do anything if no system is detected as flex
             if ENTITLEMENTS != [] and not ALL_ENTITLEMENTS:
                 for element in conn.client.org.listSoftwareEntitlementsForOrg(conn.key,org['id']):
                     if element['label'] in ENTITLEMENTS:
                         try:
-                            if novirt and element['label'] in ENTITLEMENTS_REQUIRED:
+                            if  element['label'] in ENTITLEMENTS_REQUIRED:
                                 needed_flex = element['used'] + element['used_flex'] + ENTITLEMENTS_REQUIRED['label']
                             else:
-                                needed_flex = element['used'] + element['used_flex']
+                                needed_flex = element['used_flex']
                             max_alloc = element['unallocated_flex']
                             #allocate the maximum value or the needed_flex depending on wether or not the requirement is too large or not.
                             if max_alloc >= needed_flex:
@@ -221,10 +221,10 @@ def allocate_flex(conn,orgid,entitlements,novirt):
             elif ALL_ENTITLEMENTS:
                 for element in conn.client.org.listSoftwareEntitlementsForOrg(conn.key,org['id']):
                     try:
-                        if novirt and element['label'] in ENTITLEMENTS_REQUIRED:
+                        if element['label'] in ENTITLEMENTS_REQUIRED:
                             needed_flex = element['used'] + element['used_flex'] + ENTITLEMENTS_REQUIRED['label']
                         else:
-                            needed_flex = element['used'] + element['used_flex']
+                            needed_flex = element['used_flex']
                         max_alloc = element['unallocated_flex']
                         #allocate the maximum value or the needed_flex depending on wether or not the requirement is too large or not.
                         if max_alloc >= needed_flex:
