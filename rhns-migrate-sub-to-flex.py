@@ -141,7 +141,30 @@ def allocate_flex(conn,orgid,entitlements,novirt):
             print "Attempting to log in as admin of org "+str(org['id'])
             #attempt to log in against org ID ; to avoid this create a section using the [ID] with the username and password.
             conn2 = RHNSConnection(None,None,conn.url,org['id'])
-            #TODO: add logic here that parses the list of eligible flex guests for their consumption : entitlements, base and child channels. amend that to the detection then. 
+            #check the consumption of flex systems and compute the entitlements required for their migration
+            for guest in conn2.client.system.listEligibleFlexGuests(conn2.key):
+                #this won't work for systems that aren't RHEL
+                try:
+                    #add a management, add an entitlement of all the system is subscribed to
+                    ENTITLEMENTS_REQUIRED['enterprise_entitled'] += 1
+                    #add base channel
+                    base = conn2.client.system.listSubscribableBaseChannels(conn2.key,guest['id'])
+                    if base['label'] in ENTITLEMENTS_REQUIRED.keys():
+                        ENTITLEMENTS_REQUIRED[base['label']] += 1
+                    else:
+                        ENTITLEMENTS_REQUIRED[base['label']] = 1
+                    #add the childs
+                    for channel in conn2.client.system.listSubscribedChildChannels(conn2.key,guest['id']):
+                        if channel['label'] in ENTITLEMENTS_REQUIRED.keys():
+                            ENTITLEMENTS_REQUIRED[channel['label']] += 1
+                        else:
+                            ENTITLEMENTS_REQUIRED[channel['label']] = 1
+                except e:
+                    sys.stderr.write("unable to take into account a guest of system "+str(system['id'])+" ; ignore if this is a system not consuming any channels")
+                    pass
+            #do we need to break virtualization hosts
+            #TODO: confirm if systems in here can be converted without breaking the host
+            #TODO: are guests of a virt host of the old type detected  by listFlexGuests?
             if novirt:
                 #add virtualization addons to the cleaning list for later.
                 if not ALL_SYSADDONS and not 'virtualization_host' in SYS_ADDONS:
@@ -172,6 +195,9 @@ def allocate_flex(conn,orgid,entitlements,novirt):
                             except e:
                                 sys.stderr.write("unable to take into account a guest of system "+str(system['id'])+" ; ignore if there are non RHEL guests running there")
                                 pass
+            #treating all entitlements, adding what is required to fix flex consumption.
+            #this code will never be able to force systems that aren't detected as flex. it only makes sense to use the numbers we detected with the previous two runs
+            #TODO; update logic of this part to limit association to the current number if it is inferior to what is used + what we detected for flex and virt_hosts.
             if ENTITLEMENTS != [] and not ALL_ENTITLEMENTS:
                 for element in conn.client.org.listSoftwareEntitlementsForOrg(conn.key,org['id']):
                     if element['label'] in ENTITLEMENTS:
