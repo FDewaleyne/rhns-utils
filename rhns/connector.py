@@ -39,8 +39,8 @@ class RHNSConnection:
                 if re.search('/rpc/api$', self.url) == None:
                     self.url = self.url+"/rpc/api"
             #if this is the url then nothing has to be done further to URL
-        #TODO: fix this and create a snippet with the connector / source for all to import
-        #self.host = host
+        from urlparse import urlparse
+        self.host = urlparse(self.url).hostname
         #check if there is a username in the options
         if username == None:
             #no username in command line
