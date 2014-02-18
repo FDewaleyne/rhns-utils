@@ -27,6 +27,9 @@ __version__ = "1.0"
 
 import xmlrpclib, os, ConfigParser, re, sys, getpass
 
+#TODO : replace with the class, integrate version support for different ways to fetch data
+#TODO : add a way to list the allocation per organization as well
+
 #global variables
 client=None;
 SATELLITE_LOGIN=None;
