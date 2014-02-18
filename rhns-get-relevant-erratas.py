@@ -129,3 +129,59 @@ for system in rhn_data.itervalues():
     csv_writer.writerow(line)
     del line
 del rhn_data
+# start main function
+def main(version):
+    """main function - takes in the options and selects the behaviour"""
+    global verbose;
+    import optparse
+    parser = optparse.OptionParser("%prog [-s systemid] [-e erratatype] [-o file.csv]\n Outputs the list of erratas available for a machine depending on the options selected", version=version)
+    parser.add_option("-s", "--systmid", dest="systemid", type="int", default=None, help="Uses that systemid instead of the value extracted from the system's systemid file")
+    parser.add_option("-e", "--erratatype", dest="erratatype", default=":", help="Type of Errata to use. Default to all, can be limited to 'Security Advisory', 'Product Enhancement Advisory' or 'Bug Fix Advisory' ; also accepted the shortenned versions 'security', 'enhangement' and 'bugfix'")
+    parser.add_option("-o", "--output", dest="output",default=None, help="Name of the csv file to generate - if not used, will display output on terminal")
+    #connection config group
+    connectgroup = OptionGroup(parser,"Connection Options", "These options can be used to specify what server to connect to")
+    connectgroup.add_option("-H", "--url", dest="saturl",default=None, help="URL of the satellite api, e.g. https://satellite.example.com/rpc/api or http://127.0.0.1/rpc/api ; can also be just the hostname or ip of the satellite. Facultative.")
+    connectgroup.add_option("-U", "--user", dest="satuser",default=None, help="username to use with the satellite. Should be admin of the organization owning the channels. Faculative.")
+    connectgroup.add_option("-P", "--password", dest="satpwd",default=None, help="password of the user. Will be asked if not given and not in the configuration file.")
+    connectgroup.add_option("-O", "--org", dest="satorg", default="baseorg", help="name of the organization to use - design the section of the config file to use. Facultative, defaults to %default")
+    parser.add_option_group(connectgroup)
+    #debug options
+    debuggroup = OptionGroup(parser,"Debugging Option", "these options can be used to collect debugging information")
+    debuggroup.add_option("-v","--verbose",dest="verbose",default=False,action="store_true",help="activate verbose output")
+    parser.add_option_group(debuggroup)
+    #parse everything
+    (options, args) = parser.parse_args()
+    #set verbosity globally
+    verbose = options.verbose
+    #TODO rewrite logic here
+    if options.entlist:
+        key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
+        list_entitlements(key)
+        client.auth.logout(key)
+    elif options.entitlement and not options.syslist:
+        key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
+        get_entitlement(key,options.entitlement)
+        client.auth.logout(key)
+    elif options.orgid != None:
+        if options.syslist:
+            parser.error("not implemented yet")
+        else:
+            key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
+            org_consumtion(key,options.orgid) 
+            client.auth.logout(key)
+    elif options.syslist:
+        if options.entitlement == None:
+            parser.error('you forgot to select an entitlement')
+            parser.print_help()
+        else:
+            parser.error('not implemented yet')
+            #key = session_init()
+            #client.auth.logout(key)
+    else:
+        key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
+        general_consumption(key)
+        client.auth.logout(key)
+
+if __name__ == "__main__":
+    main(__version__)
+
