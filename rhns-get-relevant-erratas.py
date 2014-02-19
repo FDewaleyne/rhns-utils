@@ -103,31 +103,38 @@ class RHNSConnection:
             self.client.auth.logout(self.key)
         pass
 
-#end of the class#fetch the data
-print "Fetching the list of systems and the details for each of your system. This may take some time"
-rhn_data={}
-for system in client.system.listUserSystems(key):
-    #gather the details for each system
-    rhn_data[system['id']] = {'id': system['id'], 'last_checkin': system['last_checkin']}
-    #add all the data from getDetails to this dictionary
-    rhn_data[system['id']].update(client.system.getDetails(key,int(system['id'])))
-    #add all the network details as well
-    rhn_data[system['id']].update(client.system.getNetwork(key,int(system['id'])))
 
-#now write the csv file
-print "Writing data to the csv file"
-headers=['id' , 'profile_name', 'hostname', 'ip', 'last_checkin', 'base_entitlement', 'description', 'adress1','adress2', 'city', 'state', 'country', 'building', 'room', 'rack']
-import csv
-csvfile = open('systems_'+login+'.csv', 'wb' )
-csv_writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
-csv_writer.writerow(headers)
-for system in rhn_data.itervalues():
-    line = []
-    for value in headers:
-        line.append(system.get(value))
-    csv_writer.writerow(line)
-    del line
-del rhn_data
+#TODO: this is a reminder on how to organize the data for the csv export
+#end of the class#fetch the data
+#print "Fetching the list of systems and the details for each of your system. This may take some time"
+#rhn_data={}
+#for system in client.system.listUserSystems(key):
+#    #gather the details for each system
+#    rhn_data[system['id']] = {'id': system['id'], 'last_checkin': system['last_checkin']}
+#    #add all the data from getDetails to this dictionary
+#   rhn_data[system['id']].update(client.system.getDetails(key,int(system['id'])))
+#    #add all the network details as well
+#    rhn_data[system['id']].update(client.system.getNetwork(key,int(system['id'])))
+
+def csv_create(filename,data):
+    """creates a csv file with the data provided"""
+    print "Writing data to the csv file"
+    #TODO: redo headers 
+    headers=['id' , 'profile_name', 'hostname', 'ip', 'last_checkin', 'base_entitlement', 'description', 'adress1','adress2', 'city', 'state', 'country', 'building', 'room', 'rack']
+    import csv
+    csvfile = open('systems_'+login+'.csv', 'wb' )
+    csv_writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
+    csv_writer.writerow(headers)
+    #browse the errata data depending on the header
+    for errata in data.itervalues():
+        line = []
+        for value in headers:
+            line.append(errata.get(value))
+        csv_writer.writerow(line)
+        del line
+    del data
+    pass
+
 # start main function
 def main(version):
     """main function - takes in the options and selects the behaviour"""
