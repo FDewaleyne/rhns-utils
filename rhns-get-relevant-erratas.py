@@ -114,7 +114,6 @@ for system in client.system.listUserSystems(key):
     #add all the network details as well
     rhn_data[system['id']].update(client.system.getNetwork(key,int(system['id'])))
 
-client.auth.logout(key)
 #now write the csv file
 print "Writing data to the csv file"
 headers=['id' , 'profile_name', 'hostname', 'ip', 'last_checkin', 'base_entitlement', 'description', 'adress1','adress2', 'city', 'state', 'country', 'building', 'room', 'rack']
@@ -135,8 +134,8 @@ def main(version):
     global verbose;
     import optparse
     parser = optparse.OptionParser("%prog [-s systemid] [-e erratatype] [-o file.csv]\n Outputs the list of erratas available for a machine depending on the options selected", version=version)
-    parser.add_option("-s", "--systmid", dest="systemid", type="int", default=None, help="Uses that systemid instead of the value extracted from the system's systemid file")
-    parser.add_option("-e", "--erratatype", dest="erratatype", default=":", help="Type of Errata to use. Default to all, can be limited to 'Security Advisory', 'Product Enhancement Advisory' or 'Bug Fix Advisory' ; also accepted the shortenned versions 'security', 'enhangement' and 'bugfix'")
+    parser.add_option("-s", "--systemid", dest="systemid", type="int", default=None, help="Uses that systemid instead of the value extracted from the system's systemid file")
+    parser.add_option("-e", "--erratatype", dest="erratatype", default=None, help="Type of Errata to use. Default to all, can be limited to 'Security Advisory', 'Product Enhancement Advisory' or 'Bug Fix Advisory' ; also accepted the shortenned versions 'security', 'enhangement' and 'bugfix'")
     parser.add_option("-o", "--output", dest="output",default=None, help="Name of the csv file to generate - if not used, will display output on terminal")
     #connection config group
     connectgroup = OptionGroup(parser,"Connection Options", "These options can be used to specify what server to connect to")
@@ -153,34 +152,32 @@ def main(version):
     (options, args) = parser.parse_args()
     #set verbosity globally
     verbose = options.verbose
-    #TODO rewrite logic here
-    if options.entlist:
-        key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
-        list_entitlements(key)
-        client.auth.logout(key)
-    elif options.entitlement and not options.syslist:
-        key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
-        get_entitlement(key,options.entitlement)
-        client.auth.logout(key)
-    elif options.orgid != None:
-        if options.syslist:
-            parser.error("not implemented yet")
-        else:
-            key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
-            org_consumtion(key,options.orgid) 
-            client.auth.logout(key)
-    elif options.syslist:
-        if options.entitlement == None:
-            parser.error('you forgot to select an entitlement')
-            parser.print_help()
-        else:
-            parser.error('not implemented yet')
-            #key = session_init()
-            #client.auth.logout(key)
+    #set the systemid
+    if options.systemid == None:
+        systemid = getsystemid()
     else:
-        key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
-        general_consumption(key)
-        client.auth.logout(key)
+        systemid = options.systemid
+    #session init
+    key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
+    if options.erratatype == None:
+        #select all
+    elif options.erratatype in ('Security Advisory','security advisory', 'security'):
+        #select all security advisories
+    elif options.erratatype in ('Product Enhancement Advisory', 'product enhancement advisory', 'enhancement'):
+        #select all product enhancement advisories
+    elif options.erratatype in ('Bug Fix Advisory', 'bug fix advisory', 'bugfix'):
+        #select bugfix advisories
+    else:
+        sys.stderr.write("Incorrect errata type, use 'Security Advisory', 'Product Enhancement Advisory' or 'Bug Fix Advisory' ; also accepted the shortenned versions 'security', 'enhangement' and 'bugfix'")
+        #list all erratas
+    client.auth.logout(key)
+    if options.output != None:
+        #print data
+    else:
+        if verbose:
+            #print data
+        #create file
+    pass
 
 if __name__ == "__main__":
     main(__version__)
