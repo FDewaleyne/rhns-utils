@@ -185,10 +185,9 @@ def csv_create(filename,data):
             line.append(errata.get(value))
         csv_writer.writerow(line)
         del line
-    del data
     pass
 
-def print_data(filename,data):
+def print_data(data):
     """Displays on screen the information read"""
     headers=['advisory_name' , 'advisory_type', 'date', 'advisory_synopsis',  'product', 'topic','description']
     print " %14s | %28s | %10s | %50s | %50s | %100s | %s" % ('Errata', 'Type', 'Date','Synopsis','Product','Topic','Description')
@@ -241,10 +240,10 @@ def main(version):
         sys.exit("Incorrect errata type, use 'Security Advisory', 'Product Enhancement Advisory' or 'Bug Fix Advisory' ; also accepted the shortenned versions 'security', 'enhangement' and 'bugfix'")
     client.auth.logout(key)
     if options.output != None:
-        #print data
+        print_data(data)
     else:
         if verbose:
-            #print data
+            print_data(data)
         csv_create(options.output,data)
     conn.close()
     pass
