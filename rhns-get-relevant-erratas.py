@@ -103,18 +103,6 @@ class RHNSConnection:
             self.client.auth.logout(self.key)
         pass
 
-
-#TODO: this is a reminder on how to organize the data for the csv export
-#end of the class#fetch the data
-#print "Fetching the list of systems and the details for each of your system. This may take some time"
-#rhn_data={}
-#for system in client.system.listUserSystems(key):
-#    #gather the details for each system
-#    rhn_data[system['id']] = {'id': system['id'], 'last_checkin': system['last_checkin']}
-#    #add all the data from getDetails to this dictionary
-#   rhn_data[system['id']].update(client.system.getDetails(key,int(system['id'])))
-#    #add all the network details as well
-#    rhn_data[system['id']].update(client.system.getNetwork(key,int(system['id'])))
 def get_systemid():
     """fetches the systemid of the system if a systemid file exists"""
     import fileinput, re
@@ -131,7 +119,6 @@ def get_systemid():
         sys.stderr.write("failed to read the systemid from /etc/sysconfig/rhn/systemid")
         raise
     return int(systemid)
-
 
 def process_some_erratas(conn,systemid,type):
     """fetches all erratas for a system, returns the read erratas - one type only : 'Security Advisory', 'Product Enhancement Advisory' or 'Bug Fix Advisory' """
