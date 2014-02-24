@@ -151,7 +151,7 @@ def process_all_erratas(conn,systemid):
     """fetches all erratas for a system, returns the read erratas."""
     data = dict()
     for errata in conn.client.system.getRelevantErrata(conn.key,systemid):
-        data[errata[id]]=errata
+        data[errata['advisory_name']]=errata
         #contents of an errata at this stage :
         # - int "id" - Errata ID.
         # - string "date" - Date erratum was created.
@@ -164,9 +164,9 @@ def process_all_erratas(conn,systemid):
 def _read_errata(conn,erratas):
     """treats the list of erratas and returns the object wanted to be processed for display or csvcreate"""
     for errata in erratas:
-        details = conn.client.errata.getDetails(conn.key,errata['id'])
+        details = conn.client.errata.getDetails(conn.key,errata['advisory_name'])
         #amend details such as topic, description and product to the data
-        details[errata['id']].update({"topic": details['topic'], "description": details['description'], "product": details['product']})
+        details[errata['advisory_name']].update({"topic": details['topic'], "description": details['description'], "product": details['product']})
     return erratas
 
 def csv_create(filename,data):
