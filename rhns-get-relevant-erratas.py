@@ -214,22 +214,23 @@ def main(version):
     verbose = options.verbose
     #set the systemid
     if options.systemid == None:
-        systemid = getsystemid()
+        systemid = get_systemid()
+        if systemid == None:
+            sys.exit("No systemid found on the system - use -s to pass one")
     else:
         systemid = options.systemid
     #session init
     conn = RHNSConnection(options.satuser,options.satpwd,options.saturl,options.satorg)
     if options.erratatype == None:
-        #select all
+        data = process_all_erratas(conn,systemid)
     elif options.erratatype in ('Security Advisory','security advisory', 'security'):
-        #select all security advisories
+        data = process_some_erratas(conn,systemid,'Security Advisory')
     elif options.erratatype in ('Product Enhancement Advisory', 'product enhancement advisory', 'enhancement'):
-        #select all product enhancement advisories
+        data = process_some_erratas(conn,systemid,'Product Enhancement Advisory')
     elif options.erratatype in ('Bug Fix Advisory', 'bug fix advisory', 'bugfix'):
-        #select bugfix advisories
+        data = process_some_erratas(conn,systemid,'Bug Fix Advisory')
     else:
-        sys.stderr.write("Incorrect errata type, use 'Security Advisory', 'Product Enhancement Advisory' or 'Bug Fix Advisory' ; also accepted the shortenned versions 'security', 'enhangement' and 'bugfix'")
-        #list all erratas
+        sys.exit("Incorrect errata type, use 'Security Advisory', 'Product Enhancement Advisory' or 'Bug Fix Advisory' ; also accepted the shortenned versions 'security', 'enhangement' and 'bugfix'")
     client.auth.logout(key)
     if options.output != None:
         #print data
