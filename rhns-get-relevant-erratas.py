@@ -144,15 +144,19 @@ def process_all_erratas(conn,systemid):
         # - string "advisory_name" - Name such as RHSA, etc
     return _read_errata(conn,data)
 
-def _read_errata(client,erratas):
+def _read_errata(conn,erratas):
     """treats the list of erratas and returns the object wanted to be processed for display or csvcreate"""
-    pass
+    for errata in erratas:
+        details = conn.client.errata.getDetails(conn.key,errata['id'])
+        #amend details such as topic, description and product to the data
+        details[errata['id']].update({"topic": details['topic'], "description": details['description'], "product": details['product']})
+    return erratas
 
 def csv_create(filename,data):
     """creates a csv file with the data provided"""
     print "Writing data to the csv file"
-    #TODO: redo headers 
-    headers=['id' , 'profile_name', 'hostname', 'ip', 'last_checkin', 'base_entitlement', 'description', 'adress1','adress2', 'city', 'state', 'country', 'building', 'room', 'rack']
+    headers=['id' , 'date', 'advisory_synopsis', 'advisory_type', 'advisory_name', 'product', 'topic','description']
+    #there may be more information read - depending what is neede
     import csv
     csvfile = open('systems_'+login+'.csv', 'wb' )
     csv_writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
