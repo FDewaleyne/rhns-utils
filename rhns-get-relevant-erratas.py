@@ -188,6 +188,14 @@ def csv_create(filename,data):
     del data
     pass
 
+def print_data(filename,data):
+    """Displays on screen the information read"""
+    headers=['advisory_name' , 'advisory_type', 'date', 'advisory_synopsis',  'product', 'topic','description']
+    print " %14s | %28s | %10s | %50s | %50s | %100s | %s" % ('Errata', 'Type', 'Date','Synopsis','Product','Topic','Description')
+    for errata in data.itervalues():
+        print " %14s | %28s | %10s | %50s | %50s | %100s | %s" % (errata['advisory_name'], errata['advisory_type'], str(errata['date']),errata['advisory_synopsis'],errata['product'],errata['topic'],errata['description'])
+    pass
+
 # start main function
 def main(version):
     """main function - takes in the options and selects the behaviour"""
@@ -237,7 +245,7 @@ def main(version):
     else:
         if verbose:
             #print data
-        #create file
+        csv_create(options.output,data)
     conn.close()
     pass
 
