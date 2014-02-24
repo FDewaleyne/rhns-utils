@@ -27,7 +27,7 @@ class RHNSConnection:
     client = None
     closed = False
 
-    def __init__(self,username,password,host,orgname="default"):
+    def __init__(self,username,password,host,orgname="baseorg"):
         """connects to the satellite db with given parameters"""
         #read configuration
         import ConfigParser,os,re
@@ -169,7 +169,7 @@ def main(version):
     else:
         systemid = options.systemid
     #session init
-    key = session_init(options.satorg , {"url" : options.saturl, "login" : options.satuser, "password" : options.satpwd})
+    conn = RHNSConnection(options.satuser,options.satpwd,options.saturl,options.satorg)
     if options.erratatype == None:
         #select all
     elif options.erratatype in ('Security Advisory','security advisory', 'security'):
@@ -188,6 +188,7 @@ def main(version):
         if verbose:
             #print data
         #create file
+    conn.close()
     pass
 
 if __name__ == "__main__":
