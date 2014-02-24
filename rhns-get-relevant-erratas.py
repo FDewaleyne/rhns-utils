@@ -15,7 +15,7 @@ __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
 
 
-import xmlrpclib, sys, getpass
+import xmlrpclib, sys
 #connection part
 class RHNSConnection:
 
@@ -115,6 +115,23 @@ class RHNSConnection:
 #   rhn_data[system['id']].update(client.system.getDetails(key,int(system['id'])))
 #    #add all the network details as well
 #    rhn_data[system['id']].update(client.system.getNetwork(key,int(system['id'])))
+def get_systemid():
+    """fetches the systemid of the system if a systemid file exists"""
+    import fileinput, re
+    systemid = None
+    try:
+        for line in fileinput.input("/etc/sysconfig/rhn/systemid"):
+            m = re.search('ID-(\d+)', line)
+            if m:
+                systemid = int(m.group(1))
+                break
+            else:
+                pass
+    except:
+        sys.stderr.write("failed to read the systemid from /etc/sysconfig/rhn/systemid")
+        raise
+    return int(systemid)
+
 
 def process_some_erratas(conn,systemid,type):
     """fetches all erratas for a system, returns the read erratas - one type only : 'Security Advisory', 'Product Enhancement Advisory' or 'Bug Fix Advisory' """
