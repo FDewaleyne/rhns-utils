@@ -27,7 +27,7 @@ class RHNSConnection:
     client = None
     closed = False
 
-    def __init__(self,username,password,host,orgname="baseorg"):
+    def __init__(self,username,password,host,orgname="default"):
         """connects to the satellite db with given parameters"""
         #read configuration
         import ConfigParser,os,re
