@@ -116,6 +116,10 @@ class RHNSConnection:
 #    #add all the network details as well
 #    rhn_data[system['id']].update(client.system.getNetwork(key,int(system['id'])))
 
+def read_errata(client,erratas):
+    """treats the list of erratas and returns the object wanted to be processed for display or csvcreate"""
+    pass
+
 def csv_create(filename,data):
     """creates a csv file with the data provided"""
     print "Writing data to the csv file"
