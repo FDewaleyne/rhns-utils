@@ -116,7 +116,23 @@ class RHNSConnection:
 #    #add all the network details as well
 #    rhn_data[system['id']].update(client.system.getNetwork(key,int(system['id'])))
 
-def read_errata(client,erratas):
+
+
+def process_all_erratas(conn,systemid):
+    """fetches all erratas for a system, returns the read erratas."""
+    data = dict()
+    for errata in conn.client.system.getRelevantErrata(conn.key,systemid):
+        data[errata[id]]=errata
+        #contents of an errata at this stage :
+        # - int "id" - Errata ID.
+        # - string "date" - Date erratum was created.
+        # - string "update_date" - Date erratum was updated.
+        # - string "advisory_synopsis" - Summary of the erratum.
+        # - string "advisory_type" - Type label such as Security, Bug Fix
+        # - string "advisory_name" - Name such as RHSA, etc
+    return _read_errata(conn,data)
+
+def _read_errata(client,erratas):
     """treats the list of erratas and returns the object wanted to be processed for display or csvcreate"""
     pass
 
