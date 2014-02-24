@@ -172,7 +172,7 @@ def _read_errata(conn,erratas):
 def csv_create(filename,data):
     """creates a csv file with the data provided"""
     print "Writing data to the csv file"
-    headers=['id' , 'date', 'advisory_synopsis', 'advisory_type', 'advisory_name', 'product', 'topic','description']
+    headers=['advisory_name' , 'advisory_type', 'date', 'advisory_synopsis',  'product', 'topic','description']
     #there may be more information read - depending what is neede
     import csv
     csvfile = open('systems_'+login+'.csv', 'wb' )
