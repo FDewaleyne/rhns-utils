@@ -81,6 +81,11 @@ def print_info(key,label,verbose):
         print "\t\t= packages:"
         for entry in keydata['packages']:
             print "\t\t\t+ "+entry['name']
+    #config file part
+    print "\t\t= config channels:"
+    try:
+        for configchannel in client.activationkey.listConfigChannels(key,label):
+            print "\t\t\t+ "+configchannel['label']+" - "+configchannel['name']
 
 def delete_key(key,label):
     global client;
