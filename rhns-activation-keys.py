@@ -94,7 +94,7 @@ def delete_key(key,label):
         print "Actication Key not found or can't be deleted"
 
 def main():
-    parser = optparse.OptionParser("usage : %prog -k activationkey  |-l [-v]")
+    parser = optparse.OptionParser("%prog -k activationkey  |-l [-v]")
     parser.add_option("-l", "--list", dest="listing", help="List all keys and quit", action="store_true")
     parser.add_option("-k", "--key", dest="keylabel")
     parser.add_option("-d", "--deletekey", dest="delkey",action="store_true",help="deletes the key")
