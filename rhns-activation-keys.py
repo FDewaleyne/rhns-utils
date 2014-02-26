@@ -83,7 +83,12 @@ def print_info(key,label,verbose):
             print "\t\t\t+ "+entry['name']
     #config file part
     print "\t\t= config channels:"
-    for configchannel in client.activationkey.listConfigChannels(key,label):
+    try:
+        configchannels = client.activationkey.listConfigChannels(key,label)
+    except:
+        #satellite 5.5 and previous, if activation key has no config channel, just use an empty dictionary
+        configchannels = {}
+    for configchannel in configchannels:
         print "\t\t\t+ "+configchannel['label']+" - "+configchannel['name']
 
 def delete_key(key,label):
