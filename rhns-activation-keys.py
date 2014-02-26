@@ -82,14 +82,18 @@ def print_info(key,label,verbose):
         for entry in keydata['packages']:
             print "\t\t\t+ "+entry['name']
     #config file part
-    print "\t\t= config channels:"
+    print "\t- config channels:"
     try:
         configchannels = client.activationkey.listConfigChannels(key,label)
     except:
         #satellite 5.5 and previous, if activation key has no config channel, just use an empty dictionary
         configchannels = {}
     for configchannel in configchannels:
-        print "\t\t\t+ "+configchannel['label']+" - "+configchannel['name']
+        print "\t\t= "+configchannel['label']+" - "+configchannel['name']+" - "+configchannel['description']
+        if verbose:
+            files = client.configchannel.listFiles(key,configchannel['label'])
+            for file in files:
+                print "\t\t\t+ "+file['type']+" - "+file['path']
 
 def delete_key(key,label):
     global client;
