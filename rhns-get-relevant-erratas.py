@@ -226,14 +226,13 @@ def main(version):
         data = process_some_erratas(conn,systemid,'Bug Fix Advisory')
     else:
         sys.exit("Incorrect errata type, use 'Security Advisory', 'Product Enhancement Advisory' or 'Bug Fix Advisory' ; also accepted the shortenned versions 'security', 'enhangement' and 'bugfix'")
-    client.auth.logout(key)
+    conn.close()
     if options.output != None:
         print_data(data)
     else:
         if verbose:
             print_data(data)
         csv_create(options.output,data)
-    conn.close()
     pass
 
 if __name__ == "__main__":
