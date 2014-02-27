@@ -177,10 +177,10 @@ def csv_create(filename,data):
 
 def print_data(data):
     """Displays on screen the information read"""
-    headers=['advisory_name' , 'advisory_type', 'date', 'advisory_synopsis',  'product', 'topic','description']
-    print " %14s | %28s | %10s | %50s | %50s | %100s | %s" % ('Errata', 'Type', 'Date','Synopsis','Product','Topic','Description')
+    headers=['advisory_name' , 'advisory_type', 'date', 'advisory_synopsis',  'product', 'topic']
+    print " %14s | %28s | %10s | %50s | %50s | %100s" % ('Errata', 'Type', 'Date','Synopsis','Product','Topic')
     for errata in data.itervalues():
-        print " %14s | %28s | %10s | %50s | %50s | %100s | %s" % (errata['advisory_name'], errata['advisory_type'], str(errata['date']),errata['advisory_synopsis'],errata['product'],errata['topic'],errata['description'])
+        print " %14s | %28s | %10s | %50s | %50s | %100s" % (errata['advisory_name'], errata['advisory_type'], str(errata['date']),errata['advisory_synopsis'],errata['product'],errata['topic'])
     pass
 
 # start main function
