@@ -124,7 +124,7 @@ def process_some_erratas(conn,systemid,type):
     """fetches all erratas for a system, returns the read erratas - one type only : 'Security Advisory', 'Product Enhancement Advisory' or 'Bug Fix Advisory' """
     data = dict()
     for errata in conn.client.system.getRelevantErrataByType(conn.key,systemid,type):
-        data[errata[id]]=errata
+        data[errata['advisory_name']]=errata
         #contents of an errata at this stage :
         # - int "id" - Errata ID.
         # - string "date" - Date erratum was created.
