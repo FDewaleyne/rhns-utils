@@ -227,7 +227,7 @@ def main(version):
     else:
         sys.exit("Incorrect errata type, use 'Security Advisory', 'Product Enhancement Advisory' or 'Bug Fix Advisory' ; also accepted the shortenned versions 'security', 'enhangement' and 'bugfix'")
     conn.close()
-    if options.output != None:
+    if options.output == None:
         print_data(data)
     else:
         if verbose:
