@@ -163,7 +163,7 @@ def csv_create(filename,data):
     headers=['advisory_name' , 'advisory_type', 'date', 'advisory_synopsis',  'product', 'topic','description']
     #there may be more information read - depending what is neede
     import csv
-    csvfile = open('systems_'+login+'.csv', 'wb' )
+    csvfile = open(filename, 'wb' )
     csv_writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
     csv_writer.writerow(headers)
     #browse the errata data depending on the header
