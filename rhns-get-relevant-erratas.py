@@ -162,7 +162,7 @@ def csv_create(filename,data):
     print "Writing data to the csv file"
     headers=['advisory_name' , 'advisory_type', 'date', 'advisory_synopsis',  'product', 'topic','description']
     #there may be more information read - depending what is neede
-    import csv
+    import csv,re
     csvfile = open(filename, 'wb' )
     csv_writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
     csv_writer.writerow(headers)
@@ -170,7 +170,12 @@ def csv_create(filename,data):
     for errata in data.itervalues():
         line = []
         for value in headers:
-            line.append(errata.get(value))
+            lval = errata.get(value)
+            if isinstance(lval, basestring):
+                #encode in utf-8
+                line.append(lval.encode('utf-8'))
+            else:
+                line.append(errata.get(value))
         csv_writer.writerow(line)
         del line
     pass
