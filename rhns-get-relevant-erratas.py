@@ -151,9 +151,10 @@ def process_all_erratas(conn,systemid):
 def _read_errata(conn,erratas):
     """treats the list of erratas and returns the object wanted to be processed for display or csvcreate"""
     for errata in erratas:
-        details = conn.client.errata.getDetails(conn.key,errata['advisory_name'])
-        #amend details such as topic, description and product to the data
-        details[errata['advisory_name']].update({"topic": details['topic'], "description": details['description'], "product": details['product']})
+        #errata is one of the keys in the erratas dict
+        details = conn.client.errata.getDetails(conn.key,errata)
+        #amend erratas with elements of details such as topic, description and product to the data
+        erratas[errata].update({"topic": details['topic'], "description": details['description'], "product": details['product']})
     return erratas
 
 def csv_create(filename,data):
