@@ -285,11 +285,11 @@ def matchArch(arch):
     """returns what a package architecture should be for that arch value"""
     # this is likely not going to work for everyone but it should cover most cases. 
     if arch == 'ia32':
-        return ["i686","i386","noarch"]
+        return ["i686", "i586","i386","noarch"]
     elif arch == 'ia64':
         return ["x86_64","noarch"]
     elif arch == 'x86_64':
-        return ["i386","i686","x86_64","noarch"]
+        return ["i386","i586","i686","x86_64","noarch"]
     #may need exceptions for *-sun-solaris and other archs - don't have any packages for these right now
     else:
         #that should work for most cases
