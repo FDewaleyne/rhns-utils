@@ -3,7 +3,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "1.0"
+__version__ = "1.1"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "stable"
@@ -196,7 +196,7 @@ def main(version):
     """main function"""
     global verbose;
     import optparse
-    parser = optparse.OptionParser("%prog action_option [connection_options] [action_options] \n Adds as much flex entitlements as there is usage on each entitlement consumed then attempt to migrate systems, then the consumption is reset to usage", version=version)
+    parser = optparse.OptionParser("%prog action_option [connection_options] [global_options]\n    schedules the comparison of all files of the given config channel and wait for the execution of the actions one by one", version=version)
     # connection options
     connect_group = optparse.OptionGroup(parser, "Connection options","Not required unless you want to bypass the details of ~/.satellite, .satellite or /etc/sysconfig/rhn/satellite or simply don't want to be asked the settings at run time")
     connect_group.add_option("--url", dest="saturl", help="URL of the satellite api, e.g. https://satellite.example.com/rpc/api or http://127.0.0.1/rpc/api ; can also be just the hostname or ip of the satellite. Facultative.")
