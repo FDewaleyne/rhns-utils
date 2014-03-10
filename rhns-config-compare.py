@@ -3,10 +3,10 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.1"
+__version__ = "1.0"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
-__status__ = "test"
+__status__ = "stable"
 
 import xmlrpclib, sys, re
 
@@ -92,7 +92,7 @@ class RHNSConnection:
         self.key = self.client.auth.login(self.username,self.__password)
         try:
             self.satver = self.client.api.systemVersion()
-            print "satellite version "+self.satver
+            print "connected to satellite version %s on host %s" % (self.satver, self.host)
         except:
             self.satver = None
             print "unable to detect the version"
@@ -129,15 +129,17 @@ def _check_osad(conn,systemid):
     return False
 
 def _check_action_finished(conn,actionid):
-    """returns true if the action has finished, false if not"""
-    global verbose;
-    systems = conn.schedule.listInProgressSystems(conn.key,actionid)
-    for system in systems:
-        if system.get('timestamp',None) == None:
-            return False
-        elif verbose == True:
-            print "action completed on system %s (%d) at %s" % (system['server_name'],system['server_id'],str(system['timestamp']))
-    return True
+    """returns true if the action has finished, false if not. There can be at least 1 system or 0 if the action has been executed """
+    global verbose; 
+    inprogress = conn.client.schedule.listInProgressSystems(conn.key,actionid)
+    if len(inprogress)  == 0:
+        return True
+    else:
+        print "still waiting on %d systems" % (len(inprogress))
+        if verbose:
+            for system in inprogress:
+                print "- waiting on %s (%d), should complete at %s" % (system['server_name'],system['server_id'],str(system['timestamp']))
+        return False
     
 
 def run_channel(conn,channellabel,noosad,delay):
@@ -151,6 +153,7 @@ def run_channel(conn,channellabel,noosad,delay):
     systems = conn.client.configchannel.listSubscribedSystems(conn.key,channellabel)
     run_systems = []
     # each system is in systems[X]['id']
+    print "\nProcessing config channel "+channellabel
     if noosad:
         print "not running the osad checks - this may make the execution of the configuration channel test take a long time"
         for system in systems:
@@ -164,26 +167,29 @@ def run_channel(conn,channellabel,noosad,delay):
                     print "system %s (%d) will be checked" % (system['name'],system['id'])
             else:
                 print "system %s (%d) doesn't have osad installed, skipping" % (system['name'],system['id'])
+    if len(run_systems) == 0:
+        sys.stderr.write( "no system to run a comparison against, skipping config channel "+channellabel)
+        return
     from time import sleep
     progress = 1
     for configfile in configfiles:
         #plan one action per config file
-        print "\nProcessing file %s (%d out of %d)" % (file['path'], progress, len(configfiles))
+        print "\nProcessing file %s (%d out of %d)" % (configfile['path'], progress, len(configfiles))
         progress+=1
-        actionid = conn.client.configchannel.scheduleFileComparisons(conn.key,channellabel,file['path'],run_systems)
+        actionid = conn.client.configchannel.scheduleFileComparisons(conn.key,channellabel,configfile['path'],run_systems)
         try:
-            sleep(delay * 60)
+            #sleep(delay * 60)
             while(not _check_action_finished(conn,actionid)):
                 sleep (delay * 60)
         except KeyboardInterrupt:
-            sys.stderr.write('Keyboard interrupt captured - skipping to next call')
-            sys.stderr.write("Details available at https://+"conn.host"+/rhn/schedule/ActionDetails.do?aid="+str(actionid) % (conn.host, actionid)
+            sys.stderr.write("\nKeyboard interrupt captured - skipping to next call\n")
+            sys.stderr.write("Details available at https://%s/rhn/schedule/ActionDetails.do?aid=%d \n" % (conn.host, actionid))
             continue
         # display the output
         failed = conn.schedule.listFailedSystems(conn.key,actionid)
         passed = conn.schedule.listCompletedSystems(conn.key,actionid)
         print "Completed : %d, Failed : %d, ran on %d systems" % (len(passed), len(failed), len(run_systems))
-        print "Details available at https://%s/rhn/schedule/ActionDetails.do?aid=%d" % (conn.host, actionid)
+        print "Details available at https://%s/rhn/schedule/ActionDetails.do?aid=%d \n" % (conn.host, actionid)
 
 #main function
 def main(version):
@@ -218,7 +224,7 @@ def main(version):
         for configchannel in conn.client.configchannel.listGlobals(conn.key):
             print "%30s | %5s | %s" % (configchannel['label'],str(configchannel['orgId']),configchannel['name'])
         conn.client.auth.logout(conn.key)
-    elif len(options.channellabels == 0):
+    elif options.channellabels == None:
         #run agains all channel
         print "running against all channels - this can take a long time."
         conn = RHNSConnection(options.satuser,options.satpwd,options.saturl,options.orgname)
@@ -229,7 +235,10 @@ def main(version):
         #normal run against a set list of channels
         conn = RHNSConnection(options.satuser,options.satpwd,options.saturl,options.orgname)
         for channellabel in options.channellabels:
-            run_channel(conn,channellabel,options.noosad,options.delay)
+            if conn.client.configchannel.channelExists(conn.key,channellabel) == 1:
+                run_channel(conn,channellabel,options.noosad,options.delay)
+            else:
+                sys.stderr.write("channel %s does not exist\n" % (channellabel))
         conn.client.auth.logout(conn.key)
     pass
 
