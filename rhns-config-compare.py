@@ -10,17 +10,16 @@ __status__ = "stable"
 
 import xmlrpclib, sys, re
 
-##
+###
 #
-# this can not unregister any RHEL system and can only restrain the numbers of allocatable systems in sub-organizations to the currently used values. attempting to do otherwise results in an error from the API.
+# Script aimed at the debugging of the comparison of configuration channels. Can take a long time to run.
 #
-##
-##
-# To the extent possible under law, Red Hat, Inc. has dedicated all copyright to this software to the public domain worldwide, pursuant to the CC0 Public Domain Dedication.
+###
+
+###
+# To the extent possible under law, Red Hat, Inc. has dedicated all copyright to this software to the public domain worldwide, pursuant to the CC0 Public Domain Dedication. 
 # This software is distributed without any warranty.  See <http://creativecommons.org/publicdomain/zero/1.0/>.
-##
-# V1.0 by FDewaleyne - 30-08-2012 - versioning started
-# v2.0 by FDewaleyne - 21-12-2013 - rewrite of the script to be object oriented and take options
+###
 
 #connection class
 class RHNSConnection:
