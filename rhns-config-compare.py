@@ -13,6 +13,7 @@ import xmlrpclib, sys, re
 ###
 #
 # Script aimed at the debugging of the comparison of configuration channels. Can take a long time to run.
+# python 2.6 required
 #
 ###
 
