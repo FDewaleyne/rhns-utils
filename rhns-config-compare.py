@@ -3,7 +3,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "1.1"
+__version__ = "1.1b"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "stable"
@@ -185,8 +185,8 @@ def run_channel(conn,channellabel,noosad,delay):
             sys.stderr.write("Details available at https://%s/rhn/schedule/ActionDetails.do?aid=%d \n" % (conn.host, actionid))
             continue
         # display the output
-        failed = conn.schedule.listFailedSystems(conn.key,actionid)
-        passed = conn.schedule.listCompletedSystems(conn.key,actionid)
+        failed = conn.client.schedule.listFailedSystems(conn.key,actionid)
+        passed = conn.client.schedule.listCompletedSystems(conn.key,actionid)
         print "Completed : %d, Failed : %d, ran on %d systems" % (len(passed), len(failed), len(run_systems))
         print "Details available at https://%s/rhn/schedule/ActionDetails.do?aid=%d \n" % (conn.host, actionid)
 
