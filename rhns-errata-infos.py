@@ -154,7 +154,7 @@ def main(version):
         conn.client.auth.logout(conn.key)
     elif options.channellabels == None:
         #run agains all channel
-        sys.stderr.write('please select at least one channel or use -l to list channels')
+        sys.stderr.write("please select at least one channel or use -l to list channels\n")
     else:
         #normal run against a set list of channels
         conn = RHNSConnection(options.satuser,options.satpwd,options.saturl,options.orgname)
