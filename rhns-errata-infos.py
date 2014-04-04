@@ -1,13 +1,20 @@
 #!/usr/bin/python
 # this script has for purpose to dump infos about the erratas of a channel
 
-__author__ = "Felix Dewaleyne"
+###
+# To the extent possible under law, Red Hat, Inc. has dedicated all copyright to this software to the public domain worldwide, pursuant to the CC0 Public Domain Dedication. 
+# This software is distributed without any warranty.  See <http://creativecommons.org/publicdomain/zero/1.0/>.
+###
+
+
+
+__author__=  "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
-__license__ = "GPL"
-__version__ = "1.0"
+__license__ = "GPLv2"
+__version__ = "1.2"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
-__status__ = "beta"
+__status__ = "stable"
 
 import xmlrpclib, sys, re
 
@@ -110,8 +117,8 @@ def run_channel(conn,label):
         print "child of %s" % (cdetails['parent_channel_label'])
     print "Erratas :"
     for errata in conn.client.channel.software.listErrata(conn.key,label):
-        epackages  = conn.client.errata.listPackages(conn.key,cdetails['advisory_name'])
-        print "%d - %s - issued on %s - %d" % (errata['id'],errata['advisory_name'], str(errata['issue_date']), len(epackages))
+        epackages  = conn.client.errata.listPackages(conn.key,errata['advisory_name'])
+        print "%d - %s - issued on %s - packages:%d" % (errata['id'],errata['advisory_name'], str(errata['issue_date']), len(epackages))
         if verbose:
             for package in epackages:
                 if package.get('epoch','') == '':
@@ -120,6 +127,23 @@ def run_channel(conn,label):
                     epoch = "%s:" % (package.get('epoch',''))
                 print " - ID %d :  %s%s-%s-%s.%s, present in %d channels, checksum(%s) %s" % (package['id'],epoch,package['name'],package['version'],package['release'],package['arch_label'], len(package['providing_channels']), package.get('checksum_type','None'), package.get('checksum','None'))
 
+def run_package(conn,id):
+    """displays the info for the package"""
+    pdetails = conn.client.packages.getDetails(conn.key,id)
+    if pdetails.get('epoch','') == '':
+        epoch = ""
+    else:
+        epoch = "%s:" % (pdetails.get('epoch',''))
+    print "package %d (%s%s-%s-%s.%s) is in the channels:" % (id,epoch,pdetails['name'],pdetails['version'],pdetails['release'],pdetails['arch_label'])
+    for channel in conn.client.packages.listProvidingChannels(conn.key,id):
+        if channel.get('parent_label','') != '':
+            print " - %s (%s) - child of %s" % (channel['label'],channel['name'],channel['parent_label'])
+        else:
+            print " - %s (%s)" % (channel['label'],channel['name'])
+    erratas = conn.client.packages.listProvidingErrata(conn.key,id)
+    print "and in %d erratas :" % (len(erratas))
+    for errata in erratas:
+        print " - %s - issued %s" %(errata['advisory'],errata['issue_date'])
 
 #main function
 def main(version):
@@ -134,9 +158,10 @@ def main(version):
     connect_group.add_option("--password", dest="satpwd", help="password of the user. Will be asked if not given and not in the configuration file.")
     connect_group.add_option("--orgname", dest="orgname", default="baseorg", help="the name of the organization to use as per your configuration file - defaults to baseorg")
     # action options
-    action_group = optparse.OptionGroup(parser, "Action options", "use -c for each channel you wish to try in one run or no option to try all the configuration channels.")
+    action_group = optparse.OptionGroup(parser, "Action options", "use -c for each channel you wish to try in one run or no option to try all the configuration channels. use only one of those types of options as many times are necessary")
     action_group.add_option("-l","--list",dest='list', action='store_true', default=False, help="List all the channels and quit")
     action_group.add_option("-c","--softchannel", dest='channellabels', action='append', help="Each call of this option indicates a software channel to use - identified by its label. If none is specified all will be used")
+    action_group.add_option("-p","--packageid", dest='packageids', action='append', help='Each call of this option makes the script display the channels providing the package')
     # global options
     global_group = optparse.OptionGroup(parser, "Global options", "Option that affect the display of information")
     global_group.add_option("-v", "--verbose",dest='verbose', action='store_true', default=False, help="Increase the verbosity of the script")
@@ -148,19 +173,24 @@ def main(version):
     verbose = options.verbose
     if options.list:
         conn = RHNSConnection(options.satuser,options.satpwd,options.saturl,options.orgname)
-        print "%30s | %30s | %10s | %s" % ("Label","parent", "Arch", "Name")
+        print "%50s | %50s | %15s | %s\n" % ("Label","parent", "Arch", "Name")
         for softchannel in conn.client.channel.listSoftwareChannels(conn.key):
-            print "%30s | %30s | %10s | %s" % (softchannel['label'],softchannel['parent_label'],softchannel['arch'],softchannel['name'])
+            print "%50s | %50s | %15s | %s" % (softchannel['label'],softchannel['parent_label'],softchannel['arch'],softchannel['name'])
         conn.client.auth.logout(conn.key)
-    elif options.channellabels == None:
-        #run agains all channel
-        sys.stderr.write("please select at least one channel or use -l to list channels\n")
-    else:
+    elif options.channellabels != None:
         #normal run against a set list of channels
         conn = RHNSConnection(options.satuser,options.satpwd,options.saturl,options.orgname)
         for channellabel in options.channellabels:
             run_channel(conn,channellabel)
         conn.client.auth.logout(conn.key)
+    elif options.packageids != None:
+        conn = RHNSConnection(options.satuser,options.satpwd,options.saturl,options.orgname)
+        for packageid in options.packageids:
+            run_package(conn,int(packageid))
+        conn.client.auth.logout(conn.key)
+    else:
+        parser.error('incorrect option usage')
+        parser.print_help()
     pass
 
 #calls start here
