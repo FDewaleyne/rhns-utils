@@ -11,7 +11,7 @@
 __author__=  "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPLv2"
-__version__ = "1.0"
+__version__ = "1.0b"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
