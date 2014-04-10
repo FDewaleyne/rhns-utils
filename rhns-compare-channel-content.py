@@ -100,6 +100,10 @@ class RHNSConnection:
         self.closed = True
         pass
 
+    def reconnect(self):
+        """reconnects to the satellite"""
+        self.key = self.client.auth.login(self.username,self.__password)
+    
     def __exit__(self):
         """closes connection on exit"""
         if not self.closed :
@@ -119,7 +123,7 @@ def search_content(sat1 ,label, sat2):
             epoch = sat1_package.get('epoch','')+':'
         print "Working on %s:%s-%s-%s.%s (ID %d, checksum(%s) %s)" % (epoch, sat1_package['name'], sat1_package['version'], sat1_package['release'], sat1_package['arch_label'], sat1_package['id'], sat1_package.get('checksum_type','none'), sat1_package.get('checksum','none'))
         search_results = sat2.packages.search.advanced("name:\"%s\" AND version:\"%s\" AND release:\"%s\" AND arch:\"%s\"" % (sat1_package['name'], sat1_package['version'], sat1_package['release']))
-        print "Found %d matches"
+        print "Found %d matches" % (len(search_results))
         for match in search_results:
             if match.get('epoch','') == sat1_package.get('epoch',''):
                 mchannels = sat2.client.packages.listProvidingChannels(sat2.key,match['id'])
