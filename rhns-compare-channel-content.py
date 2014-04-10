@@ -11,7 +11,7 @@
 __author__=  "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPLv2"
-__version__ = "1.0"
+__version__ = "1.0f"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -122,7 +122,13 @@ def search_content(sat1 ,label, sat2):
         else:
             epoch = sat1_package.get('epoch','')+':'
         print "Working on %s:%s-%s-%s.%s (ID %d, checksum(%s) %s)" % (epoch, sat1_package['name'], sat1_package['version'], sat1_package['release'], sat1_package['arch_label'], sat1_package['id'], sat1_package.get('checksum_type','none'), sat1_package.get('checksum','none'))
-        search_results = sat2.packages.search.advanced("name:\"%s\" AND version:\"%s\" AND release:\"%s\" AND arch:\"%s\"" % (sat1_package['name'], sat1_package['version'], sat1_package['release']))
+        #catch search errors and try to continue
+        try:
+            search_results = sat2.client.packages.search.advanced(sat2.key,"name:\"%s\" AND version:\"%s\" AND release:\"%s\" AND arch:\"%s\"" % (sat1_package['name'], sat1_package['version'], sat1_package['release'], sat1_package['arch_label']))
+        except:
+            print "error while searching package"
+            #proceed to next package
+            continue
         print "Found %d matches" % (len(search_results))
         for match in search_results:
             if match.get('epoch','') == sat1_package.get('epoch',''):
@@ -175,11 +181,11 @@ def main(version):
         sat2url = raw_input("Please enter the url of the second satellite's api (e.g. http://satellite.example.com/rpc/api): ").strip()
         sat2user = raw_input("Please enter a username for the second satellite : ").strip()
         import getpass                                                                                                                                                                                                                                                  
-        satpwd = getpass.getpass(prompt="Password: ")                                                                                                                                                                                                          
+        sat2pwd = getpass.getpass(prompt="Password: ")                                                                                                                                                                                                          
         sys.stderr.write("\n")
         conn2 = RHNSConnection(sat2user, sat2pwd, sat2url)
         for channellabel in options.channellabels:
-            run_channel(conn,channellabel,conn2)
+            search_content(conn,channellabel,conn2)
         conn.client.auth.logout(conn.key)
         conn2.client.auth.logout(conn2.key)
     else:
