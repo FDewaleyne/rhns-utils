@@ -11,7 +11,7 @@
 __author__=  "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPLv2"
-__version__ = "1.0g"
+__version__ = "1.0h"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -179,6 +179,7 @@ def main(version):
     parser.add_option_group(global_group)
     (options, args) = parser.parse_args()
     verbose = options.verbose
+    print "Running version %s" % (str(version))
     if options.list:
         conn = RHNSConnection(options.satuser,options.satpwd,options.saturl,options.orgname)
         print "%50s | %50s | %15s | %s\n" % ("Label","parent", "Arch", "Name")
