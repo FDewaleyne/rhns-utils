@@ -48,7 +48,9 @@ if not DESTINATION['label'] in existingchannels.keys():
 
 #build the lists of content to push
 #may fail on excevely large channels. avoid using on RHEL5 base channel.
-package_list = client.channel.software.listAllPackages(key,SOURCE, FROM_DATE, TO_DATE)
+package_list = list()
+for package in client.channel.software.listAllPackages(key,SOURCE, FROM_DATE, TO_DATE) :
+    package_list.append(package['id'])
 errata_list = client.channel.software.listErrata(key,SOURCE,FROM_DATE, TO_DATE)
 
 if len(errata_list) > 0 :
@@ -60,28 +62,67 @@ if len(errata_list) > 0 :
         last_pass = True
     erratas_to_push = list()
     count = 0
-    erratas_parsed = 0
     erratas_pushed = 0
     current_pass = 0
     for errata in list_errata:
         erratas_to_push.append(errata['advisory_name'])
         count = count +1
-        erratas_parsed = erratas_parsed + 1
         if count == 49:
             result = client.channel.software.mergeErrata(key,SOURCE,DESTINATION['label'],erratas_to_push)
             erratas_pushed = erratas_pushed + len(result)
             current_pass = current_pass + 1
-            print "%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes)
+            print r"%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes)
             errata_to_push = list()
             count = 0
     if last_pass == True:
         result = client.channel.software.mergeErrata(key,SOURCE,DESTINATION['label'],erratas_to_push)
         erratas_pushed = erratas_pushed + len(result)
         current_pass = current_pass + 1
-        print "%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes)
+        print r"%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes)
 else:
     print "no errata selected"
 
 #copy packages & erratas per group of 100
+if len(errata_list) > 0 :
+    #compare content to revise the list of packages to upload
+    packages_in_destination = list()
+    for package in client.channel.software.listAllPackages(key,DESTINATION['label'], FROM_DATE, TO_DATE) :
+        packages_in_destination.append(package['id'])
+    import itertools 
+    final_package_list = list(itertools.filterfalse(lambda x: x in packages_in_destination, package_list)) + list(itertools.filterfalse(lamba x: x in package_list, packages_in_destination))
+else:
+    final_package_list = package_list
+#avoid sync issues, remove any duplicated ids
+final_package_list = list(set(final_package_list))
+if len(final_package_list) > 0 :
+    print "%d unique packages selected" % (len(final_package_list))
+    passes = final_package_list : 100
+    last_pass = False
+    if errata_list % 100 > 0 :
+        passes = passes + 1
+        last_pass = True
+    packages_to_push = list()
+    count = 0
+    packagess_pushed = 0
+    current_pass = 0
+    for package in final_package_list:
+        packages_to_push.append(package)
+        count = count +1
+        if count == 49:
+            result = client.channel.software.addPackages(key,DESTINATION['label'],packages_to_push)
+            packagess_pushed = packagess_pushed + len(result)
+            current_pass = current_pass + 1
+            print r"%d packagess pushed out of %d (pass %d of %d)" % (packagess_pushed,len(packages_list),current_pass,passes)
+            packages_to_push = list()
+            count = 0
+    if last_pass == True:
+        result = client.channel.software.mergeErrata(key,SOURCE,DESTINATION['label'],erratas_to_push)
+        erratas_pushed = erratas_pushed + len(result)
+        current_pass = current_pass + 1
+        print r"%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes)
+
+else:
+    print "no package selected"
+    
 
 client.auth.logout(key)
