@@ -71,14 +71,15 @@ if len(errata_list) > 0 :
             result = client.channel.software.mergeErrata(key,SOURCE,DESTINATION['label'],erratas_to_push)
             erratas_pushed = erratas_pushed + len(result)
             current_pass = current_pass + 1
-            print r"%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes)
+            print '\r'+"%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes),
             errata_to_push = list()
             count = 0
     if last_pass == True:
         result = client.channel.software.mergeErrata(key,SOURCE,DESTINATION['label'],erratas_to_push)
         erratas_pushed = erratas_pushed + len(result)
         current_pass = current_pass + 1
-        print r"%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes)
+        print '\r'+"%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes),
+    print "" #avoid writing next line to the same line
 else:
     print "no errata selected"
 
@@ -103,26 +104,26 @@ if len(final_package_list) > 0 :
         last_pass = True
     packages_to_push = list()
     count = 0
-    packagess_pushed = 0
+    packages_pushed = 0
     current_pass = 0
     for package in final_package_list:
         packages_to_push.append(package)
         count = count +1
         if count == 49:
             result = client.channel.software.addPackages(key,DESTINATION['label'],packages_to_push)
-            packagess_pushed = packagess_pushed + len(result)
+            packages_pushed = packages_pushed + len(result)
             current_pass = current_pass + 1
-            print r"%d packagess pushed out of %d (pass %d of %d)" % (packagess_pushed,len(packages_list),current_pass,passes)
+            print '\r'+"%d packages pushed out of %d (pass %d of %d)" % (packages_pushed,len(packages_list),current_pass,passes),
             packages_to_push = list()
             count = 0
     if last_pass == True:
         result = client.channel.software.mergeErrata(key,SOURCE,DESTINATION['label'],erratas_to_push)
         erratas_pushed = erratas_pushed + len(result)
         current_pass = current_pass + 1
-        print r"%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes)
-
+        print '\r'+"%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes),
+    print "" #avoid writing next line to the same line
 else:
     print "no package selected"
-    
 
+print "script finished"
 client.auth.logout(key)
