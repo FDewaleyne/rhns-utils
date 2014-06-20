@@ -44,7 +44,10 @@ else
     print "unknown arch %s" % (orig_details['arch_name'])
 DESTINATION['checksumType'] == origin_details['checksum_label']
 if not DESTINATION['label'] in existingchannels.keys():
+    new_channel = True
     client.channel.software.create(key,DESTINATION['label'],DESTINATION['NAME'],DESTINATION['summary'], DESTINATION['parentLabel'],DESTINATION['checksumType'])
+else:
+    new_channel = False
 
 #build the lists of content to push
 #may fail on excevely large channels. avoid using on RHEL5 base channel.
@@ -84,8 +87,8 @@ else:
     print "no errata selected"
 
 #copy packages & erratas per group of 100
-if len(errata_list) > 0 :
-    #compare content to revise the list of packages to upload
+if not new_channel or len(errata_list) > 0:
+    #compare content to revise the list of packages to upload, especially if this is not a new channel or erratas were merged.
     packages_in_destination = list()
     for package in client.channel.software.listAllPackages(key,DESTINATION['label'], FROM_DATE, TO_DATE) :
         packages_in_destination.append(package['id'])
@@ -124,6 +127,10 @@ if len(final_package_list) > 0 :
     print "" #avoid writing next line to the same line
 else:
     print "no package selected"
+
+#plan the regeneration of the repodata
+client.channel.software.regenerateYumCache(key,DESTINATION['label'])
+print "regeneration of repodata requested for %s" % (DESTINATION['label'])
 
 print "script finished"
 client.auth.logout(key)
