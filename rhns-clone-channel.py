@@ -9,10 +9,10 @@ SATELLITE="rhns56-6.gsslab.fab.redhat.com"
 USER="satadmin"
 PWD="redhat"
 #channel to copy from, label only
-SOURCE="epel-ws-6"
+SOURCE="epel-6-64-ws"
 #details of the channel to create that aren't read from the parent, do not change the name of the variables.
 #all variables need to be set except parentLabel that should be set to "" for channels that don't have a parent
-DESTINATION={ name:"magic epel 5", label:"magic-epel-6", parentLabel:"magic-6U4-64b", summary:"Clone of EPEL for RHEL6.4 64bits" }
+DESTINATION={ 'name' : "magix epel 6 ws", 'label' : "magic-epel-ws", 'parentLabel' : "magix-6-ws", 'summary' : "Clone of EPEL for RHEL6.4 64bits WS" }
 import datetime
 #dates to and from, using datetime.date(YYYY,MM,DD)
 FROM_DATE=datetime.date(2001,01,01) # first january 2001
@@ -31,7 +31,7 @@ existingchannels = dict()
 orig_details = client.channel.software.getDetails(key,SOURCE)
 
 #create the destination if required
-for channel in client.channel.listSoftwareChannels(key)):
+for channel in client.channel.listSoftwareChannels(key):
     existingchannels[channel['label']]=channel
 #minimal version of this test
 if orig_details['arch_name'] == 'x86_64':
@@ -40,12 +40,12 @@ elif orig_details['arch_name'] == 'IA-32':
     DESTINATION['archLabel'] = 'channel-ia32'
 elif orig_details['arch_name'] == 'IA-64':
     DESTINATION['archLabel'] = 'channel-ia64'
-else
+else:
     print "unknown arch %s" % (orig_details['arch_name'])
-DESTINATION['checksumType'] == origin_details['checksum_label']
+DESTINATION['checksumType'] = orig_details['checksum_label']
 if not DESTINATION['label'] in existingchannels.keys():
     new_channel = True
-    client.channel.software.create(key,DESTINATION['label'],DESTINATION['NAME'],DESTINATION['summary'], DESTINATION['parentLabel'],DESTINATION['checksumType'])
+    client.channel.software.create(key,DESTINATION['label'],DESTINATION['name'],DESTINATION['summary'], DESTINATION['parentLabel'],DESTINATION['checksumType'])
 else:
     new_channel = False
 
@@ -58,7 +58,7 @@ errata_list = client.channel.software.listErrata(key,SOURCE,FROM_DATE, TO_DATE)
 
 if len(errata_list) > 0 :
     print "%d erratas selected" % (len(errata_list))
-    passes = errata_list : 50
+    passes = errata_list / 50
     last_pass = False
     if errata_list % 50 > 0 :
         passes = passes + 1
@@ -93,14 +93,14 @@ if not new_channel or len(errata_list) > 0:
     for package in client.channel.software.listAllPackages(key,DESTINATION['label'], FROM_DATE, TO_DATE) :
         packages_in_destination.append(package['id'])
     import itertools 
-    final_package_list = list(itertools.filterfalse(lambda x: x in packages_in_destination, package_list)) + list(itertools.filterfalse(lamba x: x in package_list, packages_in_destination))
+    final_package_list = list(itertools.filterfalse(lambda x: x in packages_in_destination, package_list)) + list(itertools.filterfalse(lambda x: x in package_list, packages_in_destination))
 else:
     final_package_list = package_list
 #avoid sync issues, remove any duplicated ids
 final_package_list = list(set(final_package_list))
 if len(final_package_list) > 0 :
     print "%d unique packages selected" % (len(final_package_list))
-    passes = final_package_list : 100
+    passes = final_package_list / 100
     last_pass = False
     if errata_list % 100 > 0 :
         passes = passes + 1
