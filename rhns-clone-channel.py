@@ -45,29 +45,29 @@ else:
 DESTINATION['checksumType'] = orig_details['checksum_label']
 if not DESTINATION['label'] in existingchannels.keys():
     new_channel = True
-    client.channel.software.create(key,DESTINATION['label'],DESTINATION['name'],DESTINATION['summary'], DESTINATION['parentLabel'],DESTINATION['checksumType'])
+    client.channel.software.create(key,DESTINATION['label'],DESTINATION['name'],DESTINATION['summary'],DESTINATION['archLabel'], DESTINATION['parentLabel'],DESTINATION['checksumType'])
 else:
     new_channel = False
 
 #build the lists of content to push
 #may fail on excevely large channels. avoid using on RHEL5 base channel.
 package_list = list()
-for package in client.channel.software.listAllPackages(key,SOURCE, FROM_DATE, TO_DATE) :
+for package in client.channel.software.listAllPackages(key,SOURCE, FROM_DATE.isoformat(), TO_DATE.isoformat()) :
     package_list.append(package['id'])
-errata_list = client.channel.software.listErrata(key,SOURCE,FROM_DATE, TO_DATE)
+errata_list = client.channel.software.listErrata(key,SOURCE,FROM_DATE.isoformat(), TO_DATE.isoformat())
 
 if len(errata_list) > 0 :
     print "%d erratas selected" % (len(errata_list))
-    passes = errata_list / 50
+    passes = len(errata_list) / 50
     last_pass = False
-    if errata_list % 50 > 0 :
+    if len(errata_list) % 50 > 0 :
         passes = passes + 1
         last_pass = True
     erratas_to_push = list()
     count = 0
     erratas_pushed = 0
     current_pass = 0
-    for errata in list_errata:
+    for errata in errata_list:
         erratas_to_push.append(errata['advisory_name'])
         count = count +1
         if count == 49:
@@ -90,7 +90,7 @@ else:
 if not new_channel or len(errata_list) > 0:
     #compare content to revise the list of packages to upload, especially if this is not a new channel or erratas were merged.
     packages_in_destination = list()
-    for package in client.channel.software.listAllPackages(key,DESTINATION['label'], FROM_DATE, TO_DATE) :
+    for package in client.channel.software.listAllPackages(key,DESTINATION['label'], FROM_DATE.isoformat(), TO_DATE.isoformat()) :
         packages_in_destination.append(package['id'])
     import itertools 
     final_package_list = list(itertools.filterfalse(lambda x: x in packages_in_destination, package_list)) + list(itertools.filterfalse(lambda x: x in package_list, packages_in_destination))
@@ -100,9 +100,9 @@ else:
 final_package_list = list(set(final_package_list))
 if len(final_package_list) > 0 :
     print "%d unique packages selected" % (len(final_package_list))
-    passes = final_package_list / 100
+    passes = len(final_package_list) / 100
     last_pass = False
-    if errata_list % 100 > 0 :
+    if len(errata_list) % 100 > 0 :
         passes = passes + 1
         last_pass = True
     packages_to_push = list()
