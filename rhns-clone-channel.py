@@ -58,6 +58,7 @@ for package in client.channel.software.listAllPackages(key,SOURCE, FROM_DATE.iso
 errata_list = client.channel.software.listErrata(key,SOURCE,FROM_DATE.isoformat(), TO_DATE.isoformat())
 
 print "%d erratas selected, %d packages selected" % (len(errata_list), len(package_list))
+
 if len(errata_list) > 0 :
     passes = len(errata_list) / 50
     last_pass = False
@@ -109,17 +110,13 @@ if not new_channel or len(errata_list) > 0:
     packages_in_destination = list()
     for package in client.channel.software.listAllPackages(key,DESTINATION['label'], FROM_DATE.isoformat(), TO_DATE.isoformat()) :
         packages_in_destination.append(package['id'])
-    # import itertools 
-    # final_package_list = list(itertools.filterfalse(lambda x: x in packages_in_destination, package_list)) + list(itertools.filterfalse(lambda x: x in package_list, packages_in_destination))
     final_package_list=[package for package in packages_in_destination if package not in package_list]
     print "%d packages in source and %d packages in destination, %d to push" % (len(package_list),len(packages_in_destination),len(final_package_list))
 else:
     final_package_list = package_list
-    print "%d packages in source selected" % (len(final_package_list))
 #avoid sync issues, remove any duplicated ids
 final_package_list = list(set(final_package_list))
 if len(final_package_list) > 0 :
-    print "%d unique packages selected" % (len(final_package_list))
     passes = len(final_package_list) / 100
     last_pass = False
     if len(errata_list) % 100 > 0 :
