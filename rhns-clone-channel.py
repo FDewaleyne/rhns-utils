@@ -9,7 +9,7 @@ SATELLITE="rhns56-6.gsslab.fab.redhat.com"
 USER="satadmin"
 PWD="redhat"
 #channel to copy from, label only
-SOURCE="epel-6-64-ws"
+SOURCE="epel-6-64-main"
 #details of the channel to create that aren't read from the parent, do not change the name of the variables.
 #all variables need to be set except parentLabel that should be set to "" for channels that don't have a parent
 DESTINATION={ 'name' : "magix epel 6 ws", 'label' : "magix-epel-ws", 'parentLabel' : "magix-6-ws", 'summary' : "Clone of EPEL for RHEL6.4 64bits WS" }
@@ -17,7 +17,7 @@ import datetime
 #dates to and from, using datetime.date(YYYY,MM,DD)
 FROM_DATE=datetime.date(2001,01,01) # first january 2001
 TO_DATE=datetime.date(2013,02,21) #release of rhel 6.4
-DEBUG=5
+DEBUG=1
 ##### DO NOT EDIT PAST THIS ######
 
 #auth part
@@ -57,8 +57,8 @@ for package in client.channel.software.listAllPackages(key,SOURCE, FROM_DATE.iso
     package_list.append(package['id'])
 errata_list = client.channel.software.listErrata(key,SOURCE,FROM_DATE.isoformat(), TO_DATE.isoformat())
 
+print "%d erratas selected, %d packages selected" % (len(errata_list), len(package_list))
 if len(errata_list) > 0 :
-    print "%d erratas selected" % (len(errata_list))
     passes = len(errata_list) / 50
     last_pass = False
     if len(errata_list) % 50 > 0 :
@@ -69,17 +69,16 @@ if len(errata_list) > 0 :
     current_pass = 1
     for errata in errata_list:
         erratas_to_push.append(errata['advisory_name'])
-        print '\r'+"%d erratas prepared out of %d (pass %d of %d)%s" % (len(erratas_to_push),len(errata_list),current_pass,passes,"                     "),
         if len(erratas_to_push) == 50:
             if DEBUG >= 3:
                 print "" # new line not to overwrite the previous one
-                print "%d erratas to push in pass %d:" % (len(erratas_to_push),current_pass)
+                print "%d erratas to push in pass %d" % (len(erratas_to_push),current_pass)
                 if DEBUG >=4:
                     for errata in erratas_to_push:
                         print " - %s" % (errata)
             result = client.channel.software.mergeErrata(key,SOURCE,DESTINATION['label'],erratas_to_push)
             erratas_pushed = erratas_pushed + len(result)
-            print '\r'+"%d erratas pushed out of %d (pass %d of %d)%s" % (erratas_pushed,len(errata_list),current_pass,passes,"                   "),
+            print '\r'+"%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes),
             if DEBUG >= 4:
                 print "" # new line not to overwrite the previous one
                 for errata in result:
@@ -95,7 +94,7 @@ if len(errata_list) > 0 :
                     print " - %s" % (errata)
         result = client.channel.software.mergeErrata(key,SOURCE,DESTINATION['label'],erratas_to_push)
         erratas_pushed = erratas_pushed + len(result)
-        print '\r'+"%d erratas pushed out of %d (pass %d of %d)%s" % (erratas_pushed,len(errata_list),current_pass,passes, "                    "),
+        print '\r'+"%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes),
         if DEBUG >= 4:
             print "" # new line not to overwrite the previous one
             for errata in result:
@@ -113,8 +112,10 @@ if not new_channel or len(errata_list) > 0:
     # import itertools 
     # final_package_list = list(itertools.filterfalse(lambda x: x in packages_in_destination, package_list)) + list(itertools.filterfalse(lambda x: x in package_list, packages_in_destination))
     final_package_list=[package for package in packages_in_destination if package not in package_list]
+    print "%d packages in source and %d packages in destination, %d to push" % (len(package_list),len(packages_in_destination),len(final_package_list))
 else:
     final_package_list = package_list
+    print "%d packages in source selected" % (len(final_package_list))
 #avoid sync issues, remove any duplicated ids
 final_package_list = list(set(final_package_list))
 if len(final_package_list) > 0 :
@@ -129,11 +130,10 @@ if len(final_package_list) > 0 :
     current_pass = 1
     for package in final_package_list:
         packages_to_push.append(package)
-        print '\r'+"%d packages prepared out of %d (pass %d of %d)%s" % (len(packages_to_push),len(errata_list),current_pass,passes, "                   "),
         if len(packages_to_push) == 100:
             if DEBUG >= 3:
                 print "" # new line not to overwrite the previous one
-                print "%d packages to push in pass %d:" % (len(packages_to_push),current_pass)
+                print "%d packages to push in pass %d" % (len(packages_to_push),current_pass)
                 if DEBUG >= 6:
                     for package in packages_to_push:
                         print " - ID %d" % (package)
@@ -141,21 +141,25 @@ if len(final_package_list) > 0 :
             # addpackages returns 1 if the operation was a success, otherwise throws an error
             if result == 1:
                 packages_pushed = packages_pushed + len(packages_to_push)
-            print '\r'+"%d packages pushed out of %d (pass %d of %d)%s" % (packages_pushed,len(packages_list),current_pass,passes, "                     "),
+            print '\r'+"%d packages pushed out of %d (pass %d of %d)" % (packages_pushed,len(package_list),current_pass,passes),
             current_pass = current_pass + 1
             packages_to_push = list()
     if last_pass == True:
         result = client.channel.software.mergeErrata(key,SOURCE,DESTINATION['label'],erratas_to_push)
         if result == 1:
             packages_pushed = packages_pushed + len(packages_to_push)
-        print '\r'+"%d erratas pushed out of %d (pass %d of %d)%s" % (erratas_pushed,len(errata_list),current_pass,passes, "                    "),
+        print '\r'+"%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes),
     print "" #avoid writing next line to the same line
 else:
-    print "no package selected"
+    if len(package_list) == 0:
+        print "No packages to push"
+    else:
+        print "No packages  required to be added to the destination"
 
 #plan the regeneration of the repodata
 client.channel.software.regenerateYumCache(key,DESTINATION['label'])
-print "regeneration of repodata requested for %s" % (DESTINATION['label'])
+import time
+print "Regeneration of repodata requested for %s at %s" % (DESTINATION['label'],time.strftime("%Y-%m-%d %H:%M"))
 
-print "script finished"
+print "Script finished"
 client.auth.logout(key)
