@@ -156,14 +156,14 @@ if len(final_package_list) > 0 :
             # addpackages returns 1 if the operation was a success, otherwise throws an error
             if result == 1:
                 packages_pushed = packages_pushed + len(packages_to_push)
-            print '\r'+"%d packages pushed out of %d (pass %d of %d)" % (packages_pushed,len(package_list),current_pass,passes),
+            print '\r'+"%d packages pushed out of %d (pass %d of %d)" % (len(packages_pushed),len(final_package_list),current_pass,passes),
             current_pass = current_pass + 1
             packages_to_push = list()
     if last_pass == True:
         result = client.channel.software.mergeErrata(key,SOURCE,DESTINATION['label'],erratas_to_push)
         if result == 1:
             packages_pushed = packages_pushed + len(packages_to_push)
-        print '\r'+"%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes),
+            print '\r'+"%d packages pushed out of %d (pass %d of %d)" % (len(packages_pushed),len(final_package_list),current_pass,passes),
     print "" #avoid writing next line to the same line
 else:
     if len(package_list) == 0:
