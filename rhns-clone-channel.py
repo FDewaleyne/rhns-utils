@@ -77,7 +77,8 @@ if len(errata_list) > 0 :
                 if DEBUG >=4:
                     for errata in erratas_to_push:
                         print " - %s" % (errata)
-            result = client.channel.software.mergeErrata(key,SOURCE,DESTINATION['label'],erratas_to_push)
+            #result = client.channel.software.mergeErrata(key,SOURCE,DESTINATION['label'],erratas_to_push)
+            result = client.errata.cloneAsOriginal(key,DESTINATION['label'],erratas_to_push)
             erratas_pushed = erratas_pushed + len(result)
             print '\r'+"%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes),
             if DEBUG >= 4:
