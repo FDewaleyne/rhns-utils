@@ -71,6 +71,7 @@ print "Done, fetching errata list"
 errata_list = client.channel.software.listErrata(key,SOURCE,FROM_DATE.isoformat(), TO_DATE.isoformat())
 print "Result: %d erratas selected, %d packages selected" % (len(errata_list), len(package_list))
 
+print "Pushing erratas"
 if len(errata_list) > 0 :
     passes = len(errata_list) / 50
     last_pass = False
@@ -117,6 +118,7 @@ if len(errata_list) > 0 :
 else:
     print "no errata selected"
 
+print "Pushing packages"
 #copy packages & erratas per group of 100
 if not new_channel or len(errata_list) > 0:
     #compare content to revise the list of packages to upload, especially if this is not a new channel or erratas were merged.
