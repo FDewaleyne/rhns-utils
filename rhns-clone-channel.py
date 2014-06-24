@@ -56,7 +56,7 @@ package_list = list()
 #for package in client.channel.software.listAllPackages(key,SOURCE, FROM_DATE.isoformat(), TO_DATE.isoformat()) :
 print "Parsing package information"
 counter = 1
-import dateutil.parser
+import dateutil.parser,datetime.combine
 for package in client.channel.software.listAllPackages(key,SOURCE) :
     details = client.packages.getDetails(key,package['id'])
     print '\r'+"%d" % (counter)
