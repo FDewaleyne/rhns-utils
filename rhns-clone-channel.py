@@ -128,8 +128,8 @@ if not new_channel or len(errata_list) > 0:
     packages_in_destination = list()
     for package in client.channel.software.listAllPackages(key,DESTINATION['label']) :
         packages_in_destination.append(package['id'])
-    #final_package_list=[package for package in packages_in_destination if package not in package_list]
     final_package_list = list(set(package_list) - set(packages_in_destination))
+    #TODO : better but not perfect. this lists 39 packages and there are 35 to copy only
     print "%d packages in source and %d packages in destination, %d to push" % (len(package_list),len(packages_in_destination),len(final_package_list))
 else:
     final_package_list = package_list
