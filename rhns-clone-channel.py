@@ -21,7 +21,7 @@ import datetime
 #dates to and from, using datetime.date(YYYY,MM,DD)
 FROM_DATE=datetime.date(2001,01,01) # first january 2001
 TO_DATE=datetime.date(2013,02,21) #release of rhel 6.4
-DEBUG=1
+DEBUG=5
 ##### DO NOT EDIT PAST THIS ######
 
 #auth part
@@ -47,7 +47,7 @@ if not DESTINATION['label'] in existingchannels.keys():
         del DESTINATION['parent_label']
         print ""
     else:
-        print ", %s will be a child of %s" % (DESTINATION['label'], DESTINATION['parent_label'])
+        print "; %s will be a child of %s" % (DESTINATION['label'], DESTINATION['parent_label'])
     client.channel.software.clone(key,SOURCE,DESTINATION,True)
 else:
     print "Reusing existing channel %s" % (DESTINATION['label'])
@@ -128,7 +128,8 @@ if not new_channel or len(errata_list) > 0:
     packages_in_destination = list()
     for package in client.channel.software.listAllPackages(key,DESTINATION['label']) :
         packages_in_destination.append(package['id'])
-    final_package_list=[package for package in packages_in_destination if package not in package_list]
+    #final_package_list=[package for package in packages_in_destination if package not in package_list]
+    final_package_list = list(set(package_list) - set(packages_in_destination))
     print "%d packages in source and %d packages in destination, %d to push" % (len(package_list),len(packages_in_destination),len(final_package_list))
 else:
     final_package_list = package_list
