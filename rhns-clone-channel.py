@@ -160,7 +160,7 @@ if len(final_package_list) > 0 :
             current_pass = current_pass + 1
             packages_to_push = list()
     if last_pass == True:
-        result = client.channel.software.mergeErrata(key,SOURCE,DESTINATION['label'],erratas_to_push)
+        result = client.channel.software.addPackages(key,DESTINATION['label'],packages_to_push)
         if result == 1:
             packages_pushed = packages_pushed + len(packages_to_push)
             print '\r'+"%d packages pushed out of %d (pass %d of %d)" % (len(packages_pushed),len(final_package_list),current_pass,passes),
