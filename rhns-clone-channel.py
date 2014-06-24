@@ -56,13 +56,13 @@ package_list = list()
 #for package in client.channel.software.listAllPackages(key,SOURCE, FROM_DATE.isoformat(), TO_DATE.isoformat()) :
 print "Parsing package information"
 counter = 1
-import dateutil.parser,datetime.combine
+import dateutil.parser
 for package in client.channel.software.listAllPackages(key,SOURCE) :
     details = client.packages.getDetails(key,package['id'])
     print '\r'+"%d" % (counter)
     #convert the date to do the comparison 
     build_date = dateutil.parser.parse(details['build_date'])
-    if build_date > datetime.combine(FROM_DATE,datetime.min.time()) and build_date < datetime.combine(TO_DATE,datetime.min.time()):
+    if build_date > datetime.datetime.combine(FROM_DATE,datetime.time()) and build_date < datetime.datetime.combine(TO_DATE,datetime.time()):
         package_list.append(package['id'])
     counter = counter + 1
 errata_list = client.channel.software.listErrata(key,SOURCE,FROM_DATE.isoformat(), TO_DATE.isoformat())
