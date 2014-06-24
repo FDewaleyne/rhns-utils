@@ -11,8 +11,10 @@ PWD="redhat"
 #channel to copy from, label only
 SOURCE="epel-6-64-main"
 #details of the channel to create that aren't read from the parent, do not change the name of the variables.
-#all variables need to be set except parentLabel that should be set to "" for channels that don't have a parent
-DESTINATION={ 'name' : "magix epel 6 ws", 'label' : "magix-epel-ws", 'parentLabel' : "magix-6-ws", 'summary' : "Clone of EPEL for RHEL6.4 64bits WS" }
+#all variables thatneed to be set
+DESTINATION={ 'name' : "magix epel 6 ws", 'label' : "magix-epel-ws", 'summary' : "Clone of EPEL for RHEL6.4 64bits WS" }
+#if there is no parent_label set this to None or ""
+DESTINATION['parent_label'] = "magix-6-ws"
 import datetime
 #dates to and from, using datetime.date(YYYY,MM,DD)
 FROM_DATE=datetime.date(2001,01,01) # first january 2001
@@ -34,19 +36,14 @@ orig_details = client.channel.software.getDetails(key,SOURCE)
 #create the destination if required
 for channel in client.channel.listSoftwareChannels(key):
     existingchannels[channel['label']]=channel
-#minimal version of this test
-if orig_details['arch_name'] == 'x86_64':
-    DESTINATION['archLabel'] = 'channel-x86_64'
-elif orig_details['arch_name'] == 'IA-32':
-    DESTINATION['archLabel'] = 'channel-ia32'
-elif orig_details['arch_name'] == 'IA-64':
-    DESTINATION['archLabel'] = 'channel-ia64'
-else:
-    print "unknown arch %s" % (orig_details['arch_name'])
-DESTINATION['checksumType'] = orig_details['checksum_label']
+:DESTINATION['checksumType'] = orig_details['checksum_label']
 if not DESTINATION['label'] in existingchannels.keys():
     new_channel = True
-    client.channel.software.create(key,DESTINATION['label'],DESTINATION['name'],DESTINATION['summary'],DESTINATION['archLabel'], DESTINATION['parentLabel'],DESTINATION['checksumType'])
+    #client.channel.software.create(key,DESTINATION['label'],DESTINATION['name'],DESTINATION['summary'],DESTINATION['archLabel'], DESTINATION['parentLabel'],DESTINATION['checksumType'])
+    if DESTINATION['parent_label'] == None or DESTINATION['parent_label'] == "":
+        #parent_label should be removed if not required (None or "")
+        del DESTINATION['parent_label']
+    client.channel.software.clone(key,SOURCE,DESTINATION)
 else:
     new_channel = False
 
