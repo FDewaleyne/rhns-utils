@@ -60,15 +60,17 @@ package_list = list()
 print "Parsing package information"
 counter = 1
 import dateutil.parser
-for package in client.channel.software.listAllPackages(key,SOURCE) :
+source_packages = client.channel.software.listAllPackages(key,SOURCE)
+nb_packages = len(source_packages)
+for package in  source_packages:
     details = client.packages.getDetails(key,package['id'])
-    print '\r'+"%d" % (counter),
+    print '\r'+"%d / %d" % (counter, nb_packages),
     #convert the date to do the comparison 
     build_date = dateutil.parser.parse(details['build_date'])
     if build_date > datetime.datetime.combine(FROM_DATE,datetime.time()) and build_date < datetime.datetime.combine(TO_DATE,datetime.time()):
         package_list.append(package['id'])
     counter = counter + 1
-print "Done, fetching errata list"
+print "Done, fetching errata list                    "
 errata_list = client.channel.software.listErrata(key,SOURCE,FROM_DATE.isoformat(), TO_DATE.isoformat())
 print "Result: %d erratas selected, %d packages selected" % (len(errata_list), len(package_list))
 
