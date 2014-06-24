@@ -61,7 +61,7 @@ for package in client.channel.software.listAllPackages(key,SOURCE) :
     details = client.packages.getDetails(key,package['id'])
     print '\r'+"%d" % (counter)
     #convert the date to do the comparison 
-    build_date = dateutil.parser(details['build_date'])
+    build_date = dateutil.parser.parse(details['build_date'])
     if build_date > FROM_DATE and build_date < TO_DATE:
         package_list.append(package['id'])
     counter = counter + 1
