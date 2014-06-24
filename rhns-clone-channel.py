@@ -65,9 +65,9 @@ for package in client.channel.software.listAllPackages(key,SOURCE) :
     if build_date > datetime.datetime.combine(FROM_DATE,datetime.time()) and build_date < datetime.datetime.combine(TO_DATE,datetime.time()):
         package_list.append(package['id'])
     counter = counter + 1
+print "done, fetching errata list"
 errata_list = client.channel.software.listErrata(key,SOURCE,FROM_DATE.isoformat(), TO_DATE.isoformat())
-
-print "%d erratas selected, %d packages selected" % (len(errata_list), len(package_list))
+print "Result: %d erratas selected, %d packages selected" % (len(errata_list), len(package_list))
 
 if len(errata_list) > 0 :
     passes = len(errata_list) / 50
