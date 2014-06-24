@@ -67,7 +67,7 @@ for package in client.channel.software.listAllPackages(key,SOURCE) :
     if build_date > datetime.datetime.combine(FROM_DATE,datetime.time()) and build_date < datetime.datetime.combine(TO_DATE,datetime.time()):
         package_list.append(package['id'])
     counter = counter + 1
-print "done, fetching errata list"
+print "Done, fetching errata list"
 errata_list = client.channel.software.listErrata(key,SOURCE,FROM_DATE.isoformat(), TO_DATE.isoformat())
 print "Result: %d erratas selected, %d packages selected" % (len(errata_list), len(package_list))
 
@@ -121,7 +121,7 @@ else:
 if not new_channel or len(errata_list) > 0:
     #compare content to revise the list of packages to upload, especially if this is not a new channel or erratas were merged.
     packages_in_destination = list()
-    for package in client.channel.software.listAllPackages(key,DESTINATION['label'], FROM_DATE.isoformat(), TO_DATE.isoformat()) :
+    for package in client.channel.software.listAllPackages(key,DESTINATION['label']) :
         packages_in_destination.append(package['id'])
     final_package_list=[package for package in packages_in_destination if package not in package_list]
     print "%d packages in source and %d packages in destination, %d to push" % (len(package_list),len(packages_in_destination),len(final_package_list))
