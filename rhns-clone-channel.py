@@ -15,6 +15,8 @@ SOURCE="epel-6-64-main"
 DESTINATION={ 'name' : "magix epel 6 ws", 'label' : "magix-epel-ws", 'summary' : "Clone of EPEL for RHEL6.4 64bits WS" }
 #if there is no parent_label set this to None or ""
 DESTINATION['parent_label'] = "magix-6-ws"
+#optional value
+#DESTINATION['description'] = "the description of the channel"
 import datetime
 #dates to and from, using datetime.date(YYYY,MM,DD)
 FROM_DATE=datetime.date(2001,01,01) # first january 2001
@@ -36,14 +38,13 @@ orig_details = client.channel.software.getDetails(key,SOURCE)
 #create the destination if required
 for channel in client.channel.listSoftwareChannels(key):
     existingchannels[channel['label']]=channel
-:DESTINATION['checksumType'] = orig_details['checksum_label']
 if not DESTINATION['label'] in existingchannels.keys():
     new_channel = True
     #client.channel.software.create(key,DESTINATION['label'],DESTINATION['name'],DESTINATION['summary'],DESTINATION['archLabel'], DESTINATION['parentLabel'],DESTINATION['checksumType'])
     if DESTINATION['parent_label'] == None or DESTINATION['parent_label'] == "":
         #parent_label should be removed if not required (None or "")
         del DESTINATION['parent_label']
-    client.channel.software.clone(key,SOURCE,DESTINATION)
+    client.channel.software.clone(key,SOURCE,DESTINATION,True)
 else:
     new_channel = False
 
