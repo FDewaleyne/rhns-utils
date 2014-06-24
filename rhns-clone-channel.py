@@ -133,7 +133,11 @@ if not new_channel or len(errata_list) > 0:
 else:
     final_package_list = package_list
 #avoid sync issues, remove any duplicated ids
+if DEBUG>=5:
+    print "Packages to push: "+", ".join(str(pkgid) for pkgid in final_package_list)
 final_package_list = list(set(final_package_list))
+if DEBUG>=5:
+    print "Packages to push (after duplicate removal): "+", ".join(str(pkgid) for pkgid in final_package_list)
 if len(final_package_list) > 0 :
     passes = len(final_package_list) / 100
     last_pass = False
