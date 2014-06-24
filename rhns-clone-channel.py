@@ -40,13 +40,14 @@ for channel in client.channel.listSoftwareChannels(key):
     existingchannels[channel['label']]=channel
 if not DESTINATION['label'] in existingchannels.keys():
     new_channel = True
-    print "cloning %s to %s" % (SOURCE, DESTINATION['label'])
+    print "Cloning %s to %s" % (SOURCE, DESTINATION['label']),
     #client.channel.software.create(key,DESTINATION['label'],DESTINATION['name'],DESTINATION['summary'],DESTINATION['archLabel'], DESTINATION['parentLabel'],DESTINATION['checksumType'])
     if DESTINATION['parent_label'] == None or DESTINATION['parent_label'] == "":
         #parent_label should be removed if not required (None or "")
         del DESTINATION['parent_label']
+        print ""
     else:
-        print "%s will be a child of %s" % (DESTINATION['label'], DESTINATION['parent_label'])
+        print ", %s will be a child of %s" % (DESTINATION['label'], DESTINATION['parent_label'])
     client.channel.software.clone(key,SOURCE,DESTINATION,True)
 else:
     print "Reusing existing channel %s" % (DESTINATION['label'])
