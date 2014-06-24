@@ -53,8 +53,16 @@ else:
 #build the lists of content to push
 #may fail on excevely large channels. avoid using on RHEL5 base channel.
 package_list = list()
-for package in client.channel.software.listAllPackages(key,SOURCE, FROM_DATE.isoformat(), TO_DATE.isoformat()) :
+#for package in client.channel.software.listAllPackages(key,SOURCE, FROM_DATE.isoformat(), TO_DATE.isoformat()) :
+print "Parsing package information"
+counter = 1
+for package in client.channel.software.listAllPackages(key,SOURCE) :
+    details = client.packages.getDetails(key,package['id'])
+    print '\r'+"%d" % (counter)
+    #TODO: find a good way to convert the date
+    if details['build_date'] > FROM_DATE and details['build_date'] < TO_DATE:
     package_list.append(package['id'])
+    counter = counter + 1
 errata_list = client.channel.software.listErrata(key,SOURCE,FROM_DATE.isoformat(), TO_DATE.isoformat())
 
 print "%d erratas selected, %d packages selected" % (len(errata_list), len(package_list))
