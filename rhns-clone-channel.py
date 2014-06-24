@@ -59,7 +59,7 @@ counter = 1
 import dateutil.parser
 for package in client.channel.software.listAllPackages(key,SOURCE) :
     details = client.packages.getDetails(key,package['id'])
-    print '\r'+"%d" % (counter)
+    print '\r'+"%d" % (counter),
     #convert the date to do the comparison 
     build_date = dateutil.parser.parse(details['build_date'])
     if build_date > datetime.datetime.combine(FROM_DATE,datetime.time()) and build_date < datetime.datetime.combine(TO_DATE,datetime.time()):
