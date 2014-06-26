@@ -141,8 +141,15 @@ if DEBUG>=6:
             epoch = '0'
         else:
             epoch = details['epoch']
-        channels = ', '.join(details['channels'])
-        print "- %s:%s-%s-%s.%s built on the %s and present in channels %s" % (epoch,details['name'],details['version'],details['release'],details['arch_label'],details['build_date'], channels)
+        channels = ', '.join(details['providing_channels'])
+        print "- %s:%s-%s-%s.%s built on the %s and present in channels %s" % (epoch,details['name'],details['version'],details['release'],details['arch_label'],details['build_date'], channels),
+        #add to that info of the providing erratas
+        providing_erratas = client.packages.listProvidingErrata(key,package_id)
+        print "provided by %d erratas" % (len(providing_erratas)),
+        if len(providing_erratas) >0:
+            for errata in providing_erratas:
+                print "%s (%s) " % (errata['advisory'],errata['issue_date']),
+        print ""
 if len(final_package_list) > 0 :
     passes = len(final_package_list) / 100
     last_pass = False
