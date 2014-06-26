@@ -129,16 +129,12 @@ if not new_channel or len(errata_list) > 0:
     for package in client.channel.software.listAllPackages(key,DESTINATION['label']) :
         packages_in_destination.append(package['id'])
     final_package_list = list(set(package_list) - set(packages_in_destination))
-    #TODO : better but not perfect. this lists 39 packages and there are 35 to copy only
     print "%d packages in source and %d packages in destination, %d to push" % (len(package_list),len(packages_in_destination),len(final_package_list))
 else:
     final_package_list = package_list
 #avoid sync issues, remove any duplicated ids
-if DEBUG>=5:
+if DEBUG>=6:
     print "Packages to push: "+", ".join(str(pkgid) for pkgid in final_package_list)
-final_package_list = list(set(final_package_list))
-if DEBUG>=5:
-    print "Packages to push (after duplicate removal): "+", ".join(str(pkgid) for pkgid in final_package_list)
     for package_id in final_package_list:
         details = client.packages.getDetails(key,package_id)
         if details['epoch'] == '':
