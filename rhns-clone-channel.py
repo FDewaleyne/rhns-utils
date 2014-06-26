@@ -133,7 +133,7 @@ if not new_channel or len(errata_list) > 0:
 else:
     final_package_list = package_list
 #avoid sync issues, remove any duplicated ids
-if DEBUG>=6:
+if DEBUG>=5:
     print "Packages to push: "+", ".join(str(pkgid) for pkgid in final_package_list)
     for package_id in final_package_list:
         details = client.packages.getDetails(key,package_id)
