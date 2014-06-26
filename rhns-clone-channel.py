@@ -90,33 +90,33 @@ if len(errata_list) > 0 :
             if DEBUG >= 3:
                 print "" # new line not to overwrite the previous one
                 print "%d erratas to push in pass %d" % (len(erratas_to_push),current_pass)
-                if DEBUG >=4:
+                if DEBUG >=6:
                     for errata in erratas_to_push:
                         print " - %s" % (errata)
             #result = client.channel.software.mergeErrata(key,SOURCE,DESTINATION['label'],erratas_to_push)
             result = client.errata.cloneAsOriginal(key,DESTINATION['label'],erratas_to_push)
             erratas_pushed = erratas_pushed + len(result)
             print '\r'+"%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes),
-            if DEBUG >= 4:
+            if DEBUG >= 6:
                 print "" # new line not to overwrite the previous one
                 for errata in result:
-                    print " - %s" % (errata['advisory_name'])
+                    print " - %s, %s" % (errata['advisory_name'], errata['date'])
             current_pass = current_pass + 1
             erratas_to_push = list()
     if last_pass == True:
         if DEBUG >= 3:
             print "" # new line not to overwrite the previous one
             print "%d erratas to push in pass %d:" % (len(erratas_to_push),current_pass)
-            if DEBUG >= 4:
+            if DEBUG >= 6:
                 for errata in erratas_to_push:
                     print " - %s" % (errata)
         result = client.channel.software.mergeErrata(key,SOURCE,DESTINATION['label'],erratas_to_push)
         erratas_pushed = erratas_pushed + len(result)
         print '\r'+"%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes),
-        if DEBUG >= 4:
+        if DEBUG >= 6:
             print "" # new line not to overwrite the previous one
             for errata in result:
-                print " - %s" % (errata['advisory_name'])
+                print " - %s, %s" % (errata['advisory_name'], errata['date'])
     print "" #avoid writing next line to the same line
 else:
     print "no errata selected"
