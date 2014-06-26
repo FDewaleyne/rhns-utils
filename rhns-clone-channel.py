@@ -141,10 +141,10 @@ if DEBUG>=5:
     print "Packages to push (after duplicate removal): "+", ".join(str(pkgid) for pkgid in final_package_list)
     for package_id in final_package_list:
         details = client.packages.getDetails(key,package_id)
-        if details.get('epoch','0') == '':
-            epoch = '0valid'
+        if details['epoch'] == '':
+            epoch = '0'
         else:
-            epoch = details.get('epoch','0')
+            epoch = details['epoch']
         print "- %s:%s-%s-%s.%s, %s" % (epoch,details['name'],details['version'],details['release'],details['arch_label'],details['build_date'])
 if len(final_package_list) > 0 :
     passes = len(final_package_list) / 100
