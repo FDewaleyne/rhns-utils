@@ -145,7 +145,8 @@ if DEBUG>=5:
             epoch = '0'
         else:
             epoch = details['epoch']
-        print "- %s:%s-%s-%s.%s, %s" % (epoch,details['name'],details['version'],details['release'],details['arch_label'],details['build_date'])
+        channels = ', '.join(details['channels'])
+        print "- %s:%s-%s-%s.%s built on the %s and present in channels %s" % (epoch,details['name'],details['version'],details['release'],details['arch_label'],details['build_date'], channels)
 if len(final_package_list) > 0 :
     passes = len(final_package_list) / 100
     last_pass = False
