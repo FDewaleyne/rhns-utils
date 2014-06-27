@@ -129,7 +129,11 @@ if not new_channel or len(errata_list) > 0:
     for package in client.channel.software.listAllPackages(key,DESTINATION['label']) :
         packages_in_destination.append(package['id'])
     final_package_list = list(set(package_list) - set(packages_in_destination))
-    #TODO: insert here a check on the package list to check if they are provided by erratas. if they are, remove them from the list if the errata does not meet the criteria
+    #remove packages provided by errata that aren't part of the selection
+    for package_id in package_list:
+        for errata in client.packages.listProvidingErrata(key,package_id):
+            if errata['issue_date'] < datetime.datetime.combine(FROM_DATE,datetime.time()) or errata['issue_date'] > datetime.datetime.combine(TO_DATE,datetime.time()):
+                final_package_list.remove(package_id)
     print "%d packages in source and %d packages in destination, %d to push" % (len(package_list),len(packages_in_destination),len(final_package_list))
 else:
     final_package_list = package_list
