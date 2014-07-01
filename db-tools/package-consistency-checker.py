@@ -206,6 +206,47 @@ def gen_idlist_for_keyid(keyid = None):
         print "no packages found"
     return list_ids
 
+def gen_idlist_nokeyassoc():
+    """generates the list of packages that have no keyid association"""
+    import sys
+    sys.path.append("/usr/share/rhn")
+    try:
+            import spacewalk.common.rhnConfig as rhnConfig
+            import spacewalk.server.rhnSQL as rhnSQL
+    except ImportError:
+        try:
+            import common.rhnConfig as rhnConfig
+            import server.rhnSQL as rhnSQL
+        except ImportError:
+            print "Couldn't load the libraries required to connect to the db"
+            sys.exit(1)
+
+    rhnConfig.initCFG()
+    rhnSQL.initDB()
+    if channelid != None:
+        query = """
+        select  rp.id as "id", rpn.name||'-'||rpe.version||'-'||rpe.release||'.'||pa.label as "package"
+        from    rhnpackage rp, rhnpackagename rpn, rhnpackageevr rpe, rhnpackagearch rpa
+        where   rp.id NOT IN (select distinct package_id from rhnpackagekeyassociation)
+          and   rpn.id = rp.name_id
+          and   rpe.id = rp.evr_id
+          and   rpa.id = rp.package_arch_id
+        """
+    cursor = rhnSQL.prepare(query)
+    cursor.execute()
+    rows = cursor.fetchall_dict()
+    list_ids = []
+    if not rows is None:
+        c = 0
+        for row in rows:
+            c += 1
+            list_ids.append(row['id'])
+            print "\r%s of %s" % (str(c), str(len(rows))),
+        print ""
+    else:
+        print "no packages found"
+    return list_ids
+
 def gen_idlist():
     """generates the list of package IDs"""
     import sys
