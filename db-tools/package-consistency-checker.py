@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.6a"
+__version__ = "0.7beta"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "prod"
@@ -390,16 +390,26 @@ def create_channel(prefix, arch, conn, attemptnb=0):
 def main(versioninfo):
     import optparse
     parser = optparse.OptionParser(description="Usage: %prog [options]\nThis program will clone all erratas and packages from the source to the destination as long as they are not already present in the destiation, depending on which settings are used\n REMEMBER TO BACKUP YOUR DATABASE", version="%prog "+versioninfo)
-    parser.add_option("-H", "--host", dest="sathost", type="string", help="hostname of the satellite to use, preferably a fqdn e.g. satellite.example.com", default="localhost")
-    parser.add_option("-l", "--login", dest="satuser", type="string", help="User to connect to satellite")
-    parser.add_option("-p", "--password", dest="satpwd", type="string", help="Password to connect to satellite")
-    parser.add_option("-c", "--destChannel", dest="destChannel", default="to_delete",  type="string", help="Channel to populate with the packages that don't have a path")
-    parser.add_option("-A", "--arch",dest="arch", default="x86_64", type="string", help="Architecture to use when creating the channel and filtering packages. Defaults to x86_64 which accepts 64 and 32 bits packages")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true", default=False, help="Enables debug output")
-    parser.add_option("--keyid", dest="keyid", type="int", help="Focuses on all the packages signed by the keyid provided. Only use if you know already what keyid to remove - value to use changes from database to database.")
-    parser.add_option("--nullkeyid", dest="nullkeyid", action="store_true", default=False, help="Focuses on all packages with no key id")
-    parser.add_option("--packageid", dest="packageid", type="int", help="Focuses on the packages with the same signature as this package")
-    parser.add_option("--packagefile", dest="packagefile", type="string", help="Focuses on the packages with a path identical to the entries in a file")
+    global_group = optparse.OptionGroup(parser, "General options", "Can be used in all calls, are not required")
+    global_group.add_option("-c", "--destChannel", dest="destChannel", default="to_delete",  type="string", help="Channel to populate with the packages that don't have a path")
+    global_group.add_option("-A", "--arch",dest="arch", default="x86_64", type="string", help="Architecture to use when creating the channel and filtering packages. Defaults to x86_64 which accepts 64 and 32 bits packages")
+    #connection details
+    connect_group = optparse.OptionGroup(parser, "Connection options", "Required options")
+    connect_group.add_option("-H", "--host", dest="sathost", type="string", help="hostname of the satellite to use, preferably a fqdn e.g. satellite.example.com", default="localhost")
+    connect_group.add_option("-l", "--login", dest="satuser", type="string", help="User to connect to satellite")
+    connect_group.add_option("-p", "--password", dest="satpwd", type="string", help="Password to connect to satellite")
+    #group for the special actions
+    advanced_group = optparse.OptionGroup(parser, "Special action options", "Use only one of those")
+    advanced_group.add_option("--keyid", dest="keyid", type="int", help="Focuses on all the packages signed by the keyid provided. Only use if you know already what keyid to remove - value to use changes from database to database.")
+    advanced_group.add_option("--nullkeyid", dest="nullkeyid", action="store_true", default=False, help="Focuses on all packages with no key id")
+    advanced_group.add_option("--packageid", dest="packageid", type="int", help="Focuses on the packages with the same signature as this package")
+    advanced_group.add_option("--packagefile", dest="packagefile", type="string", help="Focuses on the packages with a path identical to the entries in a file")
+    advanced_group.add_option("--nokeyassoc", dest="nokeyassoc", action="store_true", default=False, help="Focuses on packages that don't have an entry in the key association table")
+    advanced_group.add_option("--normal", dest="normalrun", action="store_true", default=True, help="Normal run - used by default if no special option is used")
+    parser.add_option_group(connect_group)
+    parser.add_option_group(global_group)
+    parser.add_option_group(advanced_group)
     (options, args) = parser.parse_args()
     channel_arch = getChannelArch(options.arch)
     global verbose 
@@ -430,6 +440,8 @@ def main(versioninfo):
             ids = gen_idlist_for_keyid(options.keyid)
         elif options.packagefile != None:
             ids = gen_idlist_from_paths(options.packagefile)
+        elif options.nokeyassoc:
+            ids = gen_idlist_nokeyassoc()
         else:
             #default mode, filter packages present in duplicate as beta and regular but also packages with null paths
             ids = gen_idlist()
