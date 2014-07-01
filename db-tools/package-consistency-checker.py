@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.7.1beta"
+__version__ = "0.8beta"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "prod"
@@ -223,15 +223,14 @@ def gen_idlist_nokeyassoc():
 
     rhnConfig.initCFG()
     rhnSQL.initDB()
-    if channelid != None:
-        query = """
+    query = """
         select  rp.id as "id", rpn.name||'-'||rpe.version||'-'||rpe.release||'.'||rpa.label as "package"
         from    rhnpackage rp, rhnpackagename rpn, rhnpackageevr rpe, rhnpackagearch rpa
         where   rp.id NOT IN (select distinct package_id from rhnpackagekeyassociation)
           and   rpn.id = rp.name_id
           and   rpe.id = rp.evr_id
           and   rpa.id = rp.package_arch_id
-        """
+    """
     cursor = rhnSQL.prepare(query)
     cursor.execute()
     rows = cursor.fetchall_dict()
