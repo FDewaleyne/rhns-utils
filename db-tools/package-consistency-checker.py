@@ -389,7 +389,7 @@ def create_channel(prefix, arch, conn, attemptnb=0):
 #the main function of the program
 def main(versioninfo):
     import optparse
-    parser = optparse.OptionParser(description="Usage: %prog [options]\nThis program will clone all erratas and packages from the source to the destination as long as they are not already present in the destiation, depending on which settings are used\n REMEMBER TO BACKUP YOUR DATABASE", version="%prog "+versioninfo)
+    parser = optparse.OptionParser(description="This program will clone all erratas and packages from the source to the destination as long as they are not already present in the destiation, depending on which settings are used\n REMEMBER TO BACKUP YOUR DATABASE", version="%prog "+versioninfo)
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true", default=False, help="Enables debug output")
     global_group = optparse.OptionGroup(parser, "General options", "Can be used in all calls, are not required")
     global_group.add_option("-c", "--destChannel", dest="destChannel", default="to_delete",  type="string", help="Channel to populate with the packages that don't have a path")
