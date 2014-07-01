@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.8beta"
+__version__ = "0.8.1beta"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "prod"
@@ -425,7 +425,7 @@ def main(versioninfo):
             conn.client.channel.software.create(conn.key,options.destChannel,options.destChannel,options.destChannel,channel_arch,"","sha1")
         except:
             cdetails = conn.client.channel.software.getDetails(conn.key,options.destChannel)
-            if arch == cdetails['arch_name'] :
+            if options.arch == cdetails['arch_name'] :
                 print "unable to create the channel "+options.destChannel+" ... attempting to continue"
                 pass
             else:
