@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.8.1beta"
+__version__ = "0.9beta"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "prod"
@@ -206,7 +206,7 @@ def gen_idlist_for_keyid(keyid = None):
         print "no packages found"
     return list_ids
 
-def gen_idlist_nokeyassoc():
+def gen_idlist_nokeyassoc(channelid=None):
     """generates the list of packages that have no keyid association"""
     import sys
     sys.path.append("/usr/share/rhn")
@@ -223,14 +223,25 @@ def gen_idlist_nokeyassoc():
 
     rhnConfig.initCFG()
     rhnSQL.initDB()
-    query = """
-        select  rp.id as "id", rpn.name||'-'||rpe.version||'-'||rpe.release||'.'||rpa.label as "package"
-        from    rhnpackage rp, rhnpackagename rpn, rhnpackageevr rpe, rhnpackagearch rpa
-        where   rp.id NOT IN (select distinct package_id from rhnpackagekeyassociation)
-          and   rpn.id = rp.name_id
-          and   rpe.id = rp.evr_id
-          and   rpa.id = rp.package_arch_id
-    """
+    if channelid == None:
+        print "checking on all channels"
+        query = """
+            select  rp.id as "id", rpn.name||'-'||rpe.version||'-'||rpe.release||'.'||rpa.label as "package"
+            from    rhnpackage rp, rhnpackagename rpn, rhnpackageevr rpe, rhnpackagearch rpa
+            where   rp.id NOT IN (select distinct package_id from rhnpackagekeyassociation)
+              and   rpn.id = rp.name_id
+              and   rpe.id = rp.evr_id
+              and   rpa.id = rp.package_arch_id
+        """
+    else:
+        print "checking on channel ID %d" % (channelid)
+        query = """
+            select  rp.id as "id", rpn.name||'-'||rpe.version||'-'||rpe.release||'.'||rpa.label as "package"
+            from    rhnpackage rp, rhnpackagename rpn, rhnpackageevr rpe, rhnpackagearch rpa, rhnchannelpackage rcp
+            where   rp.id NOT IN (select distinct package_id from rhnpackagekeyassociation)
+              and   rpn.id = rp.name_id and rpe.id = rp.evr_id and rpa.id = rp.package_arch_id
+              and   rcp.package_id = rp.id and rcp.channel_id = """+str(channelid)+""";
+        """
     cursor = rhnSQL.prepare(query)
     cursor.execute()
     rows = cursor.fetchall_dict()
@@ -393,6 +404,7 @@ def main(versioninfo):
     global_group = optparse.OptionGroup(parser, "General options", "Can be used in all calls, are not required")
     global_group.add_option("-c", "--destChannel", dest="destChannel", default="to_delete",  type="string", help="Channel to populate with the packages that don't have a path")
     global_group.add_option("-A", "--arch",dest="arch", default="x86_64", type="string", help="Architecture to use when creating the channel and filtering packages. Defaults to x86_64 which accepts 64 and 32 bits packages")
+    global_group.add_option("--channelid",dest="channelid",default=None, type="int", help="Channel ID to limit package selection to. only implemented for --nokeyassoc right now")
     #connection details
     connect_group = optparse.OptionGroup(parser, "Connection options", "Required options")
     connect_group.add_option("-H", "--host", dest="sathost", type="string", help="hostname of the satellite to use, preferably a fqdn e.g. satellite.example.com", default="localhost")
@@ -440,7 +452,7 @@ def main(versioninfo):
         elif options.packagefile != None:
             ids = gen_idlist_from_paths(options.packagefile)
         elif options.nokeyassoc:
-            ids = gen_idlist_nokeyassoc()
+            ids = gen_idlist_nokeyassoc(options.channelid)
         else:
             #default mode, filter packages present in duplicate as beta and regular but also packages with null paths
             ids = gen_idlist()
