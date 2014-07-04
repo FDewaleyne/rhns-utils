@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.9beta"
+__version__ = "0.9.1beta"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "prod"
@@ -226,21 +226,39 @@ def gen_idlist_nokeyassoc(channelid=None):
     if channelid == None:
         print "checking on all channels"
         query = """
-            select  rp.id as "id", rpn.name||'-'||rpe.version||'-'||rpe.release||'.'||rpa.label as "package"
-            from    rhnpackage rp, rhnpackagename rpn, rhnpackageevr rpe, rhnpackagearch rpa
-            where   rp.id NOT IN (select distinct package_id from rhnpackagekeyassociation)
-              and   rpn.id = rp.name_id
-              and   rpe.id = rp.evr_id
-              and   rpa.id = rp.package_arch_id
+            select  
+                rp.id as "id",  
+                rc.label as "label",  
+                rcpa.key_id as "key-id",  
+                rpn.name||'-'||rpe.version||'-'||rpe.release||'.'||rpa.label as "package"  
+            from rhnpackage rp  
+                left outer join rhnchannelpackage rcp on rcp.package_id = rp.id  
+                inner join rhnpackagename rpn on rpn.id = rp.name_id  
+                inner join rhnpackageevr rpe on rpe.id = rp.evr_id  
+                inner join rhnpackagearch rpa on rpa.id = rp.package_arch_id  
+                left outer join rhnchannel rc on rc.id = rcp.channel_id  
+                left outer join rhnpackagekeyassociation rcpa on rcpa.package_id = rp.id  
+            where rcpa.key_id is null  
+            order by rc.label;  
         """
     else:
         print "checking on channel ID %d" % (channelid)
         query = """
-            select  rp.id as "id", rpn.name||'-'||rpe.version||'-'||rpe.release||'.'||rpa.label as "package"
-            from    rhnpackage rp, rhnpackagename rpn, rhnpackageevr rpe, rhnpackagearch rpa, rhnchannelpackage rcp
-            where   rp.id NOT IN (select distinct package_id from rhnpackagekeyassociation)
-              and   rpn.id = rp.name_id and rpe.id = rp.evr_id and rpa.id = rp.package_arch_id
-              and   rcp.package_id = rp.id and rcp.channel_id = """+str(channelid)+""";
+            select  
+                rp.id as "id",  
+                rc.label as "label",  
+                rcpa.key_id as "key-id",  
+                rpn.name||'-'||rpe.version||'-'||rpe.release||'.'||rpa.label as "package"  
+            from rhnpackage rp  
+                left outer join rhnchannelpackage rcp on rcp.package_id = rp.id  
+                inner join rhnpackagename rpn on rpn.id = rp.name_id  
+                inner join rhnpackageevr rpe on rpe.id = rp.evr_id  
+                inner join rhnpackagearch rpa on rpa.id = rp.package_arch_id  
+                left outer join rhnchannel rc on rc.id = rcp.channel_id  
+                left outer join rhnpackagekeyassociation rcpa on rcpa.package_id = rp.id  
+            where rcpa.key_id is null  
+              and rpc.channel_id = """+str(channelid)+"""
+            order by rc.label;  
         """
     cursor = rhnSQL.prepare(query)
     cursor.execute()
