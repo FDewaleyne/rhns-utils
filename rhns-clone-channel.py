@@ -118,14 +118,14 @@ def clone_channel(SOURCE,DESTINATION):
                         print " - %s, %s" % (errata['advisory_name'], errata['date'])
                 current_pass = current_pass + 1
                 erratas_to_push = list()
-        if last_pass == True:
+        if last_pass:
             if DEBUG >= 3:
                 print "" # new line not to overwrite the previous one
                 print "%d erratas to push in pass %d:" % (len(erratas_to_push),current_pass)
                 if DEBUG >= 6:
                     for errata in erratas_to_push:
                         print " - %s" % (errata)
-            result = client.channel.software.mergeErrata(key,SOURCE,DESTINATION['label'],erratas_to_push)
+            result = client.errata.cloneAsOriginal(key,DESTINATION['label'],erratas_to_push)
             erratas_pushed = erratas_pushed + len(result)
             print '\r'+"%d erratas pushed out of %d (pass %d of %d)" % (erratas_pushed,len(errata_list),current_pass,passes),
             if DEBUG >= 6:
@@ -147,7 +147,7 @@ def clone_channel(SOURCE,DESTINATION):
         #remove packages provided by errata that aren't part of the selection
         for package_id in package_list:
             for errata in client.packages.listProvidingErrata(key,package_id):
-                if datetime.datetime.strptime(errata['issue_date'], '%m/%d/%y') < datetime.datetime.combine(FROM_DATE,datetime.time()) or datetime.datetime.strptime(errata['issue_date']) > datetime.datetime.combine(TO_DATE,datetime.time()):
+                if datetime.datetime.strptime(errata['issue_date'], '%m/%d/%y') < datetime.datetime.combine(FROM_DATE,datetime.time()) or datetime.datetime.strptime(errata['issue_date'], '%m/%d/%y') > datetime.datetime.combine(TO_DATE,datetime.time()):
                     final_package_list.remove(package_id)
         print "%d packages in source and %d packages in destination, %d to push" % (len(package_list),len(packages_in_destination),len(final_package_list))
     else:
