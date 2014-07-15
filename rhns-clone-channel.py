@@ -27,7 +27,7 @@ import datetime #DO NOT REMOVE THIS
 #dates to and from, using datetime.date(YYYY,MM,DD)
 FROM_DATE=datetime.date(1971,01,01) # avoid replacing this unless you accept that erratas / packages may be missing
 TO_DATE=datetime.date(2013,02,21) #release of rhel 6.4
-DEBUG=5
+DEBUG=2
 ##### DO NOT EDIT PAST THIS ######
 
 
@@ -147,7 +147,7 @@ def clone_channel(SOURCE,DESTINATION):
         #remove packages provided by errata that aren't part of the selection
         for package_id in package_list:
             for errata in client.packages.listProvidingErrata(key,package_id):
-                if errata['issue_date'] < datetime.datetime.combine(FROM_DATE,datetime.time()) or errata['issue_date'] > datetime.datetime.combine(TO_DATE,datetime.time()):
+                if datetime.datetime.strptime(errata['issue_date']) < datetime.datetime.combine(FROM_DATE,datetime.time()) or datetime.datetime.strptime(errata['issue_date']) > datetime.datetime.combine(TO_DATE,datetime.time()):
                     final_package_list.remove(package_id)
         print "%d packages in source and %d packages in destination, %d to push" % (len(package_list),len(packages_in_destination),len(final_package_list))
     else:
