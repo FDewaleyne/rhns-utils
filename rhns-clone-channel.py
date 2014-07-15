@@ -213,11 +213,11 @@ def clone_channel(SOURCE,DESTINATION):
     print "Regeneration of repodata requested for %s at %s" % (DESTINATION['label'],time.strftime("%Y-%m-%d %H:%M"))
     pass
 
-counter = 1
+counter = 0
 for action in actions:
-    print "run %d" % (counter)
-    clone_channel(action['SOURCE'],action['DESTINATION'])
     counter += 1
+    print "run %d / %d " % (counter, len(actions))
+    clone_channel(action['SOURCE'],action['DESTINATION'])
 
 print "Script finished"
 client.auth.logout(key)
