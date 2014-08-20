@@ -11,7 +11,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "1.0"
+__version__ = "1.1"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -74,11 +74,14 @@ for channel in matching_channels:
         for channel in client.system.listSubscribedChildChannels(key,system['id']):
             thechannels.append(channel['label'])
         rhns_data[system['id']].update({'channels': ' '.join(thechannels)})
+        #actigation keys
+        theactivationkeys = client.system.listActivationKeys(key,system['id'])
+        rhns_data[system['id']].update({'activation_keys': ' '.join(theactivationkeys)})
 
 client.auth.logout(key)
 #now write the csv file
 print "Writing data to the csv file"
-headers=['id' , 'profile_name','flex', 'hostname', 'ip', 'osa_status', 'last_boot', 'base_entitlement', 'channels', 'description', 'vendor', 'system', 'product', 'bios_infos' ]
+headers=['id' , 'profile_name','flex', 'hostname', 'ip', 'osa_status', 'last_boot', 'base_entitlement', 'channels', 'activation_keys','description', 'vendor', 'system', 'product', 'bios_infos' ]
 import csv
 csvfile = open('systems_'+login+'.csv', 'wb' )
 csv_writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
