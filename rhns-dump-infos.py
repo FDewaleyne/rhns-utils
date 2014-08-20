@@ -1,4 +1,3 @@
-
 #!/usr/bin/python
 
 #NOTE: this requires pythoon 2.3 minumum
