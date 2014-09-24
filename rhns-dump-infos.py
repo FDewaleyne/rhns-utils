@@ -44,7 +44,7 @@ for system in client.system.listEligibleFlexGuests(key):
 print "Identifying relevant channels"
 matching_channels = []
 for channel in client.channel.listRedHatChannels(key):
-    if "rhev-mgmt-agent" in channel['label']:
+    if "server" in channel['label']:
         matching_channels.append(channel['label'])
 print "Fetching the list of systems attached to a rhev-mgmt-agent and their details. This may take some time"
 rhns_data={}
