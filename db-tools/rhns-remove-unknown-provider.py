@@ -242,7 +242,7 @@ def _api_add(pid,channels, conn):
            conn.reconnect()
            try:
                if verbose:
-                   print "adding package %d to %s" % (id, channel)
+                   print "adding package %d to %s" % (pid, channel)
                conn.client.channel.software.appPackages(conn.key,channel, pid)
            except :
                print "exception encountered trying to add package %d to channel %s - is it already in ?" % (pid, channel)
