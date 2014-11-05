@@ -88,7 +88,7 @@ class PackagesInfo:
         """prints the contents of the package list currently loaded"""
         print "Content of the backup: "
         for package  in packages:
-            print "package %s in channels %s" % (_pkgname(packages[package]['packageinfo'], ', '.join(packages[package]['channels']))
+            print "package %s in channels %s" % (_pkgname(packages[package]['packageinfo'], ', '.join(packages[package]['channels'])))
 
     def add(self,package_id,channel,packageinfo):
         """adds a package and associated channel to the object"""
@@ -162,7 +162,7 @@ def db_backup(bkp):
         c = 0
         for row in rows:
             c += 1
-            bkp.add(row['package_id'],row['channel_label'], {'name': row['package_name'], 'version': row['package_version'] ,'release': row['package_release'], 'epoch': row['package_epoch'], 'arch': row['package_arch']]})
+            bkp.add(row['package_id'],row['channel_label'], {'name': row['package_name'], 'version': row['package_version'] ,'release': row['package_release'], 'epoch': row['package_epoch'], 'arch': row['package_arch']})
             if not verbose:
                 print "\r%s of %s" % (str(c), str(len(rows))),
         if not verbose:
@@ -233,8 +233,8 @@ def _lucenestr(i):
 
 def _api_add(pid,channels, conn):
     """adds a package into all those channels"""
-   global verbose
-   for channel in channels:
+    global verbose
+    for channel in channels:
        try:
            conn.client.channel.software.appPackages(conn.key,channel, pid)
        except:
