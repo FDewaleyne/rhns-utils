@@ -332,7 +332,6 @@ def main(versioninfo):
     parser.add_option_group(global_group)
     parser.add_option_group(advanced_group)
     (options, args) = parser.parse_args()
-    channel_arch = getChannelArch(options.arch)
     global verbose 
     verbose = options.verbose
     if not options.backupfile:
