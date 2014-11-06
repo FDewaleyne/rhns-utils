@@ -221,9 +221,9 @@ def db_clean(bkp):
             cursor = rhnSQL.prepare(query)
             try:
                 cursor.execute()
-                cursor.commit()
+                rhnSQL.commit()
             except:
-                cursor.rollback()
+                rhnSQL.rollback()
                 raise
             print "entries deleted"
 
