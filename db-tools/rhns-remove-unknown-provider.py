@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.1"
+__version__ = "0.2"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -54,6 +54,14 @@ class RHNSConnection:
         self.client.auth.logout(self.key)
         self.closed = True
         pass
+
+    def get_redhat_channels(self):
+        """returns the list of red hat channels. if that has already been called, returns the same value as previously"""
+        if not hasattr(self, '__rh_channels'):
+            self.__rh_channels = []
+            for channel in self.conn.client.channel.listRedHatChannels(self.key):
+                self.__redhat_channels.append(channel["label"])
+        return self.__rh_channels
 
     def __exit__(self):
         """closes connection on exit"""
@@ -235,18 +243,22 @@ def _api_add(pid,channels, conn):
     """adds a package into all those channels"""
     global verbose
     for channel in channels:
-       try:
-           conn.client.channel.software.appPackages(conn.key,channel, pid)
-       except:
-           #attempt to reconnect if the api call fails, could be because of timeouts
-           conn.reconnect()
-           try:
-               if verbose:
-                   print "adding package %d to %s" % (pid, channel)
-               conn.client.channel.software.appPackages(conn.key,channel, pid)
-           except :
-               print "exception encountered trying to add package %d to channel %s - is it already in ?" % (pid, channel)
-               pass
+        if channel not in conn.get_redhat_channels():
+            try:
+                conn.client.channel.software.appPackages(conn.key,channel, pid)
+            except:
+               #attempt to reconnect if the api call fails, could be because of timeouts
+               conn.reconnect()
+               try:
+                   if verbose:
+                       print "adding package %d to %s" % (pid, channel)
+                   conn.client.channel.software.appPackages(conn.key,channel, pid)
+               except :
+                   print "exception encountered trying to add package %d to channel %s - is it already in ?" % (pid, channel)
+                   pass
+        else:
+            if verbose:
+                print "skipping %s : Red Hat channel" % (channel)
 
             
 
