@@ -59,7 +59,7 @@ class RHNSConnection:
         """returns the list of red hat channels. if that has already been called, returns the same value as previously"""
         if not hasattr(self, '__rh_channels'):
             self.__rh_channels = []
-            for channel in self.conn.client.channel.listRedHatChannels(self.key):
+            for channel in self.client.channel.listRedHatChannels(self.key):
                 self.__redhat_channels.append(channel["label"])
         return self.__rh_channels
 
