@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.2"
+__version__ = "0.4"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -73,7 +73,8 @@ import pickle
 #class used to handle the backup information
 class PackagesInfo:
 
-    packages = None
+    packages = {}
+    channels = []
     bkpfile = None
 
     def __init__(self,filename):
@@ -96,21 +97,21 @@ class PackagesInfo:
     def list(self):
         """prints the contents of the package list currently loaded"""
         print "Content of the backup: "
-        for package  in packages:
-            print "package %s in channels %s" % (_pkgname(packages[package]['packageinfo'], ', '.join(packages[package]['channels'])))
+        for package in self.packages:
+            print "package %s in channels %s" % (_pkgname(self.packages[package]['packageinfo']), ', '.join(self.packages[package]['channels']))
 
     def add(self,package_id,channel,packageinfo):
         """adds a package and associated channel to the object"""
         global verbose
-        if package in self.packages:
-            if not channel in self.packages[package]['channels']:
-                self.packages[package]['channels'].append(channel)
+        if package_id in self.packages:
+            if not channel in self.packages[package_id]['channels']:
+                self.packages[package_id]['channels'].append(channel)
                 if verbose:
                     print "%s found in %s" % (_pkgname(packageinfo), channel)
             elif verbose:
                 print "%s already recorded as being in %s" % (_pkgname(packageinfo),channel)
         else:
-            self.packages[package_id] = {'channels': channel, 'packageinfo': packageinfo}
+            self.packages[package_id] = {'channels': [channel], 'packageinfo': packageinfo}
             if verbose:
                 print "%s found in %s" % (_pkgname(packageinfo), channel)
 
@@ -142,26 +143,25 @@ def db_backup(bkp):
     rhnSQL.initDB()
     query = """
     select  
-        rp.id as "package_id",  
-        rpn.name||'-'||rpe.version||'-'||rpe.release||'.'||rpa.label as "package",  
+        rp.id as "package_id", 
         rpn.name as "package_name",
         rpe.version as "package_version",
         rpe.release as "package_release",
         rpe.epoch as "package_epoch",
         rpa.label as "package_arch",
-        rc.label as "channel_label",  
-        rc.id as "channel_id",  
-        coalesce((select name from rhnpackageprovider rpp where rpp.id = rpk.provider_id),'Unknown') as "provider"  
-    from rhnpackage rp  
-        inner join rhnpackagename rpn on rpn.id = rp.name_id  
-        inner join rhnpackageevr rpe on rpe.id = rp.evr_id  
-        inner join rhnpackagearch rpa on rpa.id = rp.package_arch_id  
-        left outer join rhnchannelpackage rcp on rcp.package_id = rp.id  
-        left outer join rhnchannel rc on rc.id = rcp.channel_id  
-        left outer join rhnpackagekeyassociation rpka on rpka.package_id = rp.id  
-        left outer join rhnpackagekey rpk on rpk.id = rpka.key_id  
+        rc.label as "channel_label",
+        rc.id as "channel_id",
+        coalesce((select name from rhnpackageprovider rpp where rpp.id = rpk.provider_id),'Unknown') as "provider"
+    from rhnpackage rp
+        inner join rhnpackagename rpn on rpn.id = rp.name_id
+        inner join rhnpackageevr rpe on rpe.id = rp.evr_id
+        inner join rhnpackagearch rpa on rpa.id = rp.package_arch_id
+        left outer join rhnchannelpackage rcp on rcp.package_id = rp.id
+        left outer join rhnchannel rc on rc.id = rcp.channel_id
+        left outer join rhnpackagekeyassociation rpka on rpka.package_id = rp.id
+        left outer join rhnpackagekey rpk on rpk.id = rpka.key_id
     where rpka.key_id is null
-    order by 2, 3;
+    order by 2, 3
     """
     cursor = rhnSQL.prepare(query)
     cursor.execute()
