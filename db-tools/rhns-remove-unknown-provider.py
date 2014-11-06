@@ -78,11 +78,12 @@ class PackagesInfo:
 
     def __init__(self,filename):
         """creates a new file or loads it, by default creates a new file. Uses pickle to store and load data."""
-        doload = os.path.isfile(filename)
-        self.bkpfile = open(filename, 'r+')
         import os.path
-        if doload:
+        if os.path.isfile(filename):
+            self.bkpfile = open(filename, 'r+')
             self.loadbkp()
+        else:
+            self.bkpfile = open(filename, 'w+')
 
     def loadbkp(self):
         """loads packages from pickle"""
@@ -143,11 +144,11 @@ def db_backup(bkp):
     select  
         rp.id as "package_id",  
         rpn.name||'-'||rpe.version||'-'||rpe.release||'.'||rpa.label as "package",  
-        rpn.name as "package_name"
-        rpn.version as "package_version"
-        rpn.release as "package_release"
-        rpn.epoch as "package_epoch"
-        rpa.label as "package_arch"
+        rpn.name as "package_name",
+        rpe.version as "package_version",
+        rpe.release as "package_release",
+        rpe.epoch as "package_epoch",
+        rpa.label as "package_arch",
         rc.label as "channel_label",  
         rc.id as "channel_id",  
         coalesce((select name from rhnpackageprovider rpp where rpp.id = rpk.provider_id),'Unknown') as "provider"  
@@ -198,15 +199,16 @@ def db_clean(bkp):
     query = """
     delete from rhnpackage where id in (
         select distinct rp.id 
-    from rhnpackage rp  
-        inner join rhnpackagename rpn on rpn.id = rp.name_id  
-        inner join rhnpackageevr rpe on rpe.id = rp.evr_id  
-        inner join rhnpackagearch rpa on rpa.id = rp.package_arch_id  
-        left outer join rhnchannelpackage rcp on rcp.package_id = rp.id  
-        left outer join rhnchannel rc on rc.id = rcp.channel_id  
-        left outer join rhnpackagekeyassociation rpka on rpka.package_id = rp.id  
-        left outer join rhnpackagekey rpk on rpk.id = rpka.key_id  
-    where rpka.key_id is null);
+        from rhnpackage rp  
+            inner join rhnpackagename rpn on rpn.id = rp.name_id  
+            inner join rhnpackageevr rpe on rpe.id = rp.evr_id  
+            inner join rhnpackagearch rpa on rpa.id = rp.package_arch_id  
+            left outer join rhnchannelpackage rcp on rcp.package_id = rp.id  
+            left outer join rhnchannel rc on rc.id = rcp.channel_id  
+            left outer join rhnpackagekeyassociation rpka on rpka.package_id = rp.id  
+            left outer join rhnpackagekey rpk on rpk.id = rpka.key_id  
+        where rpka.key_id is null and rc.channel_product_id is not null
+    );
     """
     answer = ask("Continue with the deletion of the entries?")
     if not answer :
