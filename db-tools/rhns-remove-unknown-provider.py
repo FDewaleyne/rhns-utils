@@ -247,7 +247,11 @@ def _api_add(pid,channels, conn):
     for channel in channels:
         if channel not in conn.get_redhat_channels():
             try:
-                conn.client.channel.software.appPackages(conn.key,channel, pid)
+                pdetails = conn.client.packages.getDetails(conn.key,pid)
+                if channel in pdetails['providing_channels']:
+                    print "package %d already in %s" % (pid, channel)
+                else:
+                    conn.client.channel.software.appPackages(conn.key,channel, pid)
             except:
                #attempt to reconnect if the api call fails, could be because of timeouts
                conn.reconnect()
@@ -256,8 +260,8 @@ def _api_add(pid,channels, conn):
                        print "adding package %d to %s" % (pid, channel)
                    conn.client.channel.software.appPackages(conn.key,channel, pid)
                except :
-                   print "exception encountered trying to add package %d to channel %s - is it already in ?" % (pid, channel)
-                   pass
+                   #unknown issue to fix
+                   raise
         else:
             if verbose:
                 print "skipping %s : Red Hat channel" % (channel)
@@ -282,7 +286,7 @@ def api_restore(bkp,conn):
     """attempts to re-add the packages using the data exported into the bkp"""
     global verbose
     for package in bkp.packages:
-        matched == False
+        matched = False
         channels = bkp.packages[package]['channels']
         infos = bkp.packages[package]['packageinfo']
         pkgmatches = conn.client.packages.search.advanced(conn.key, _lucenestr(infos))
@@ -344,7 +348,7 @@ def main(versioninfo):
         else:
             bkphandle = PackagesInfo(options.backupfile)
             conn = RHNSConnection(options.satuser,options.satpwd,options.sathost)
-            api_restore(bkp,conn)
+            api_restore(bkphandle,conn)
     elif options.list:
         bkphandle = PackagesInfo(options.backupfile)
         bkphandle.list()
