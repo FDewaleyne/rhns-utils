@@ -316,7 +316,7 @@ def main(versioninfo):
     parser = optparse.OptionParser(description="This script will backup a list of packages before removing them from the database.\n REMEMBER TO BACKUP YOUR DATABASE BEFORE USING IT", version="%prog "+versioninfo)
     global_group = optparse.OptionGroup(parser, "General options", "Can be used in all calls, are not required")
     global_group.add_option("-v", "--verbose", dest="verbose", action="store_true", default=False, help="Enables debug output")
-    global_group.add_option("-b","--backup", dest="backupfile", type="string", help="File to use to save / load the data. Will be overwritten if exists previously!")
+    global_group.add_option("-f","--file", dest="backupfile", type="string", help="File to use to save / load the data. Will be overwritten if exists previously!")
     #connection details
     connect_group = optparse.OptionGroup(parser, "Connection options", "Those options are required when running the restore part")
     connect_group.add_option("-H", "--host", dest="sathost", type="string", help="hostname of the satellite to use - use if localhost does not work", default="localhost")
