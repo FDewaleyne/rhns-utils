@@ -218,7 +218,7 @@ def db_clean(bkp):
         if not answer:
             print "you need to take one to be able to roll back"
         else:
-            cursor.rhnSQL.prepare(query)
+            cursor = rhnSQL.prepare(query)
             try:
                 cursor.execute()
                 cursor.commit()
