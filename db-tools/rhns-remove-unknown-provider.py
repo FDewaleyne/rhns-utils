@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.7"
+__version__ = "0.7b"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -60,7 +60,7 @@ class RHNSConnection:
         if not hasattr(self, '__rh_channels'):
             self.__rh_channels = []
             for channel in self.client.channel.listRedHatChannels(self.key):
-                self.__redhat_channels.append(channel["label"])
+                self.__rh_channels.append(channel["label"])
         return self.__rh_channels
 
     def __exit__(self):
