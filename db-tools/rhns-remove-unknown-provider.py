@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.8.0"
+__version__ = "0.8.1"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -199,13 +199,26 @@ def db_clean(bkp):
     rhnSQL.initDB()
     pids=[]
     queryA = """
-    select distinct rp.id as "pid"
-    from rhnpackage rp  
-        left outer join rhnchannelpackage rcp on rcp.package_id = rp.id  
-        left outer join rhnchannel rc on rc.id = rcp.channel_id  
-        left outer join rhnpackagekeyassociation rpka on rpka.package_id = rp.id  
-        left outer join rhnpackagekey rpk on rpk.id = rpka.key_id  
-    where (rpka.key_id is null and rc.channel_product_id is not null) or rcp.channel_id is null
+    delete from rhnchannelpackage where package_id in (
+        select distinct rp.id as "pid"
+        from rhnpackage rp  
+            left outer join rhnchannelpackage rcp on rcp.package_id = rp.id  
+            left outer join rhnchannel rc on rc.id = rcp.channel_id  
+            left outer join rhnpackagekeyassociation rpka on rpka.package_id = rp.id  
+            left outer join rhnpackagekey rpk on rpk.id = rpka.key_id  
+        where (rpka.key_id is null and rc.channel_product_id is not null) or rcp.channel_id is null
+    )
+    """
+    queryB = """
+    delete from rhnpackage where id in (
+        select distinct rp.id as "pid"
+        from rhnpackage rp
+            left outer join rhnchannelpackage rcp on rcp.package_id = rp.id  
+            left outer join rhnchannel rc on rc.id = rcp.channel_id  
+            left outer join rhnpackagekeyassociation rpka on rpka.package_id = rp.id  
+            left outer join rhnpackagekey rpk on rpk.id = rpka.key_id  
+        where rcp.channel_id is null
+    )
     """
 
     answer = ask("Continue with the deletion of the entries?")
@@ -216,23 +229,10 @@ def db_clean(bkp):
         if not answer:
             print "you need to take one to be able to roll back"
         else:
-            cursor = rhnSQL.prepare(queryA)
             try:
+                cursor = rhnSQL.prepare(queryA)
                 cursor.execute()
-                rows = cursor.fetchall_dict()
-                if not rows is None:                                                                                                                                                                                                                                                       
-                    for row in rows:
-                        pids.append(row['pid'])
-                        if verbose:
-                            print "%d added" % (row['pid'])
-                else:
-                    print "selection returned no package to remove that are in Red Hat channels"
-                    return
-                queryB = "delete from rhnchannelpackage where package_id in (%s)" % (','.join(str(apid) for apid in pids))
-                cursor.prepare(queryB)
-                cursor.execute()
-                queryC = "delete from rhnpackage where id in (%s)" % (','.join(str(apid) for apid in pids))
-                cursor.prepare(queryC)
+                cursor = rhnSQL.prepare(queryB)
                 cursor.execute()
                 rhnSQL.commit()
             except:
