@@ -14,13 +14,14 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.7b"
+__version__ = "0.8.0"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
 
 # This script exports a list of packages that would be removed by a specific query and then does the removal - after confirmation.
 # On the next call it loads the list and tries to find the packages one by one in the satellite to clone them in the channels they were removed from
+# best not used on other versions thatn 5.6 currently
 
 import xmlrpclib, re
 
@@ -196,20 +197,17 @@ def db_clean(bkp):
     db_backup(bkp)
     bkp.save()
     rhnSQL.initDB()
-    query = """
-    delete from rhnpackage where id in (
-        select distinct rp.id 
-        from rhnpackage rp  
-            inner join rhnpackagename rpn on rpn.id = rp.name_id  
-            inner join rhnpackageevr rpe on rpe.id = rp.evr_id  
-            inner join rhnpackagearch rpa on rpa.id = rp.package_arch_id  
-            left outer join rhnchannelpackage rcp on rcp.package_id = rp.id  
-            left outer join rhnchannel rc on rc.id = rcp.channel_id  
-            left outer join rhnpackagekeyassociation rpka on rpka.package_id = rp.id  
-            left outer join rhnpackagekey rpk on rpk.id = rpka.key_id  
-        where rpka.key_id is null and rc.channel_product_id is not null
-    );
+    pids=[]
+    queryA = """
+    select distinct rp.id as "pid"
+    from rhnpackage rp  
+        left outer join rhnchannelpackage rcp on rcp.package_id = rp.id  
+        left outer join rhnchannel rc on rc.id = rcp.channel_id  
+        left outer join rhnpackagekeyassociation rpka on rpka.package_id = rp.id  
+        left outer join rhnpackagekey rpk on rpk.id = rpka.key_id  
+    where (rpka.key_id is null and rc.channel_product_id is not null) or rcp.channel_id is null
     """
+
     answer = ask("Continue with the deletion of the entries?")
     if not answer :
         print "leaving..."
@@ -218,8 +216,23 @@ def db_clean(bkp):
         if not answer:
             print "you need to take one to be able to roll back"
         else:
-            cursor = rhnSQL.prepare(query)
+            cursor = rhnSQL.prepare(queryA)
             try:
+                cursor.execute()
+                rows = cursor.fetchall_dict()
+                if not rows is None:                                                                                                                                                                                                                                                       
+                    for row in rows:
+                        pids.append(row['pid'])
+                        if verbose:
+                            print "%d added" % (row['pid'])
+                else:
+                    print "selection returned no package to remove that are in Red Hat channels"
+                    return
+                queryB = "delete from rhnchannelpackage where package_id in (%s)" % (','.join(str(apid) for apid in pids))
+                cursor.prepare(queryB)
+                cursor.execute()
+                queryC = "delete from rhnpackage where id in (%s)" % (','.join(str(apid) for apid in pids))
+                cursor.prepare(queryC)
                 cursor.execute()
                 rhnSQL.commit()
             except:
