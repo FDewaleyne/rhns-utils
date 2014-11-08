@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.8.1"
+__version__ = "0.8.2"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -206,7 +206,7 @@ def db_clean(bkp):
             left outer join rhnchannel rc on rc.id = rcp.channel_id  
             left outer join rhnpackagekeyassociation rpka on rpka.package_id = rp.id  
             left outer join rhnpackagekey rpk on rpk.id = rpka.key_id  
-        where (rpka.key_id is null and rc.channel_product_id is not null) or rcp.channel_id is null
+        where rpka.key_id is null and rc.channel_product_id is not null
     )
     """
     queryB = """
