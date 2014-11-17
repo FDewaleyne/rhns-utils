@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.8.2"
+__version__ = "0.8.3"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -283,12 +283,32 @@ def _api_add(pid,channels, conn):
 
 def _cmp_pkginfo(a,b):
     """logic to compare packages with the output of lucene. required since lucene returns '' instead of None"""
+    global verbose;
     if a['name'] == b['name'] and a['version'] == b['version'] and a['release'] == b['release'] and a['arch'] == b['arch']:
         if a['epoch'] in ['',None] and b['epoch'] in ['',None] :
+            if verbose:
+                print "package info matched, both packages have no epoch"
             return True
         elif a['epoch'] == b['epoch']:
+            if verbose:
+                print "package info matched, both packages have the same epoch"
             return True
         else:
+            if verbose:
+                print "packages do not match. reason:"
+                if a['name'] != b['name']:
+                    print "name different, '%s' is different to '%s'" % (a['name'], b['name'])
+                if a['version'] != b['version']:
+                    print "version different, '%s' is different to '%s'" % (a['version'], b['version'])
+                if a['release'] != b['release']:
+                    print "release different, '%s' is different to '%s'" % (a['release'], b['release'])
+                if a['arch'] != b['arch']:
+                    print "arch different, '%s' is different to '%s'" % (a['arch'], b['arch'])
+                if a['epoch'] != b['epoch']:
+                    if a['epoch'] in ['',None] and b['epoch'] in ['',None]:
+                        print "epochs are different but set to empty values (exception in matches)"
+                    else:
+                        print "epochs are different, '%s' is different to '%s'" % (a['epoch'],b['epoch'])
             return False
     else:
         return False
