@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.8.3b"
+__version__ = "0.8.4"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -135,8 +135,6 @@ except ImportError:
     except ImportError:
         print "Couldn't load the libraries required to connect to the db"
         sys.exit(1)
-#init of the config required in the db functions
-rhnConfig.initCFG()
 
 #db related functions
 def db_backup(bkp):
@@ -388,10 +386,14 @@ def main(versioninfo):
         bkphandle = PackagesInfo(options.backupfile)
         bkphandle.list()
     elif options.backup:
+        #init of the config required in the db functions
+        rhnConfig.initCFG()
         bkphandle = PackagesInfo(options.backupfile)
         db_backup(bkphandle)
         bkphandle.save()
     elif options.remove:
+        #init of the config required in the db functions
+        rhnConfig.initCFG()
         bkphandle = PackagesInfo(options.backupfile)
         db_clean(bkphandle)
     else:
