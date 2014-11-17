@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.8.3"
+__version__ = "0.8.3b"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -328,6 +328,8 @@ def api_restore(bkp,conn):
                 #if this is the correct provider
                 if match['id'] == package:
                     #if that is the same id as the package just add that and move on
+                    if verbose:
+                        print "match has same ID as stored, restoring"
                     _api_add(match['id'], channels, conn)
                     matched = True
                     break
