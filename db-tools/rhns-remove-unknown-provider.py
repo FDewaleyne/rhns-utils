@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.8.4"
+__version__ = "0.8.5"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -294,8 +294,18 @@ def _cmp_pkginfo(a,b):
         else:
             if verbose:
                 print "packages do not match. reason:"
-                if a['name'] != b['name']:
-                    print "name different, '%s' is different to '%s'" % (a['name'], b['name'])
+                #only epoch can be different in this part
+                if a['epoch'] != b['epoch']:
+                    if a['epoch'] in ['',None] and b['epoch'] in ['',None]:
+                        print "epochs are different but set to empty values (exception in matches)"
+                    else:
+                        print "epochs are different, '%s' is different to '%s'" % (a['epoch'],b['epoch'])
+            return False
+    else:
+        if verbose:
+            print "packages do not match. reason:"
+            if a['name'] != b['name']:
+                print "name different, '%s' is different to '%s'" % (a['name'], b['name'])
                 if a['version'] != b['version']:
                     print "version different, '%s' is different to '%s'" % (a['version'], b['version'])
                 if a['release'] != b['release']:
@@ -307,8 +317,6 @@ def _cmp_pkginfo(a,b):
                         print "epochs are different but set to empty values (exception in matches)"
                     else:
                         print "epochs are different, '%s' is different to '%s'" % (a['epoch'],b['epoch'])
-            return False
-    else:
         return False
 
 
