@@ -246,6 +246,7 @@ def _pkgname(h):
 
 def _lucenestr(i):
     """returns a lucene search string depending on the values given"""
+    #note : this section uses data from the backup only. no need to replace arch.
     if i['epoch'] is None:
         return "name:%s AND version:%s AND release:%s AND arch:%s" % (i['name'], i['version'], i['release'], i['arch'])
     else:
@@ -363,8 +364,10 @@ def api_restore_alt(bkp,conn):
         channels = bkp.packages[package]['channels']
         infos = bkp.packages[package]['packageinfo']
         if infos['epoch'] is None:
+            #no need to replace arch here. infos is data from the db.
             pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], '' , infos['arch'])
         else:
+            #no need to replace arch here. infos is data from the db.
             pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], infos['epoch'], infos['arch'])
         for match in pkgmatches:
             if match['provider'] == "Red Hat Inc.":
