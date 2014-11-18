@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.8.5"
+__version__ = "0.9.0"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -282,7 +282,7 @@ def _api_add(pid,channels, conn):
 def _cmp_pkginfo(a,b):
     """logic to compare packages with the output of lucene. required since lucene returns '' instead of None"""
     global verbose;
-    if a['name'] == b['name'] and a['version'] == b['version'] and a['release'] == b['release'] and a['arch'] == b['arch']:
+    if a['name'] == b['name'] and a['version'] == b['version'] and a['release'] == b['release'] and a.get('arch',a.get('arch_label')) == b.get('arch',b.get('arch_label')):
         if a['epoch'] in ['',None] and b['epoch'] in ['',None] :
             if verbose:
                 print "package info matched, both packages have no epoch"
@@ -310,8 +310,8 @@ def _cmp_pkginfo(a,b):
                     print "version different, '%s' is different to '%s'" % (a['version'], b['version'])
                 if a['release'] != b['release']:
                     print "release different, '%s' is different to '%s'" % (a['release'], b['release'])
-                if a['arch'] != b['arch']:
-                    print "arch different, '%s' is different to '%s'" % (a['arch'], b['arch'])
+                if a.get('arch',a.get('arch_label')) != b.get('arch',b.get('arch_label')):
+                    print "arch different, '%s' is different to '%s'" % (a.get('arch',a.get('arch_label')), b.get('arch',b.get('arch_label')))
                 if a['epoch'] != b['epoch']:
                     if a['epoch'] in ['',None] and b['epoch'] in ['',None]:
                         print "epochs are different but set to empty values (exception in matches)"
@@ -329,6 +329,43 @@ def api_restore(bkp,conn):
         channels = bkp.packages[package]['channels']
         infos = bkp.packages[package]['packageinfo']
         pkgmatches = conn.client.packages.search.advanced(conn.key, _lucenestr(infos))
+        for match in pkgmatches:
+            if match['provider'] == "Red Hat Inc.":
+                #if this is the correct provider
+                if match['id'] == package:
+                    #if that is the same id as the package just add that and move on
+                    if verbose:
+                        print "match has same ID as stored, restoring"
+                    _api_add(match['id'], channels, conn)
+                    matched = True
+                    break
+                elif _cmp_pkginfo(match,infos):
+                    #if that is the same package...
+                    _api_add(match['id'], channels, conn)
+                    matched = True
+                    break
+            else:
+                if verbose:
+                    print "%s of provider %s discarded" % (_pkgname(infos),match['provider'])
+                continue
+        else:
+            print "no match found for package %s" % (_pkgname(infos)) 
+        if matched:
+            print "matched %s" %(_pkgname(infos))
+        elif len(pkgmatches) >= 1:
+            print "no match found for package %s within %d results" % (_pkgname(infos), len(pkgmatches))
+
+def api_restore_alt(bkp,conn):
+    """attempts to re-add the packages using the data exported into the bkp using another way to find the package"""
+    global verbose
+    for package in bkp.packages:
+        matched = False
+        channels = bkp.packages[package]['channels']
+        infos = bkp.packages[package]['packageinfo']
+        if infos['epoch'] is None:
+            pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], '' , infos['arch'])
+        else:
+            pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], infos['epoch'], infos['arch'])
         for match in pkgmatches:
             if match['provider'] == "Red Hat Inc.":
                 #if this is the correct provider
@@ -375,6 +412,7 @@ def main(versioninfo):
     advanced_group.add_option("--backup", dest="backup", action="store_true", default=False, help="Runs the backup and nothing else")
     advanced_group.add_option("--remove", dest="remove", action="store_true", default=False, help="Removes the rpms after taking a backup - requires confirmation at runtime")
     advanced_group.add_option("--restore", dest="restore", action="store_true", default=False, help="Attempts to add back the rpms from the backup - the packages must have been re-added correctly to the satellite before use.")
+    advanced_group.add_option("--restore-alt", dest="restore_alt", action="store_true", default=False, help="Attempts to add back the rpms from the backup - the packages must have been re-added correctly to the satellite before use.\n Uses an alternative method for the search")
     parser.add_option_group(connect_group)
     parser.add_option_group(global_group)
     parser.add_option_group(advanced_group)
@@ -390,6 +428,13 @@ def main(versioninfo):
             bkphandle = PackagesInfo(options.backupfile)
             conn = RHNSConnection(options.satuser,options.satpwd,options.sathost)
             api_restore(bkphandle,conn)
+    elif options.restore_alt:
+        if not options.satuser or not options.satpwd:
+            parser.error('Username and password are required options when restoring the removed packages')
+        else:
+            bkphandle = PackagesInfo(options.backupfile)
+            conn = RHNSConnection(options.satuser,options.satpwd,options.sathost)
+            api_restore_alt(bkphandle,conn)
     elif options.list:
         bkphandle = PackagesInfo(options.backupfile)
         bkphandle.list()
