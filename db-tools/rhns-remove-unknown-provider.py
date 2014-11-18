@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.9.1b"
+__version__ = "0.9.1c"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -46,7 +46,7 @@ class RHNSConnection:
 
     def reconnect(self):
         """re-establishes the connection"""
-        self.client = xmlrpclib.Server(URL)
+        self.client = xmlrpclib.Server("https://%s/rpc/api" % self.host)
         self.key = self.client.auth.login(self.username,self.__password)
         pass
 
