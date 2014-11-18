@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.9.0"
+__version__ = "0.9.1"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -240,9 +240,9 @@ def db_clean(bkp):
 
 def _pkgname(h):
     if h['epoch'] is None:
-        return "%s-%s-%s.%s" % (h['name'], str(h['version']) ,str(h['release']), h['arch'])
+        return "%s-%s-%s.%s" % (h['name'], str(h['version']) ,str(h['release']), h.get('arch',h.get('arch_label'))
     else:
-        return "%s:%s-%s-%s.%s" % (str(h['epoch']), h['name'], str(h['version']) ,str(h['release']), h['arch'])
+        return "%s:%s-%s-%s.%s" % (str(h['epoch']), h['name'], str(h['version']) ,str(h['release']), h.get('arch',h.get('arch_label')))
 
 def _lucenestr(i):
     """returns a lucene search string depending on the values given"""
@@ -346,7 +346,7 @@ def api_restore(bkp,conn):
                     break
             else:
                 if verbose:
-                    print "%s of provider %s discarded" % (_pkgname(infos),match['provider'])
+                    print "match %s of provider %s discarded" % (_pkgname(match),match['provider'])
                 continue
         else:
             print "no match found for package %s" % (_pkgname(infos)) 
@@ -383,7 +383,7 @@ def api_restore_alt(bkp,conn):
                     break
             else:
                 if verbose:
-                    print "%s of provider %s discarded" % (_pkgname(infos),match['provider'])
+                    print "match %s of provider %s discarded" % (_pkgname(match),match['provider'])
                 continue
         else:
             print "no match found for package %s" % (_pkgname(infos)) 
