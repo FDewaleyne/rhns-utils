@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.9.2"
+__version__ = "0.9.2b"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -239,7 +239,7 @@ def db_clean(bkp):
             print "entries deleted"
 
 def _pkgname(h):
-    if h['epoch'] is None:
+    if h['epoch'] in [None, '']:
         return "%s-%s-%s.%s" % (h['name'], str(h['version']) ,str(h['release']), h.get('arch',h.get('arch_label')))
     else:
         return "%s:%s-%s-%s.%s" % (str(h['epoch']), h['name'], str(h['version']) ,str(h['release']), h.get('arch',h.get('arch_label')))
