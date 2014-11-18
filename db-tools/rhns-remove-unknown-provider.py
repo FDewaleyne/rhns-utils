@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.9.2b"
+__version__ = "0.9.2c"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -266,17 +266,20 @@ def _api_add(pid, channels, conn):
                 print "skipping : package %d already in %s" % (pid, channel)
             else:
                 try:
+                    if verbose:
+                        print "adding package %d to %s" % (pid, channel)
                     conn.client.channel.software.addPackages(conn.key,channel, [ pid ])
                 except:
-                   #attempt to reconnect if the api call fails, could be because of timeouts
-                   conn.reconnect()
-                   try:
-                       if verbose:
-                           print "adding package %d to %s" % (pid, channel)
-                       conn.client.channel.software.addPackages(conn.key,channel, [ pid ])
-                   except :
-                       #unknown issue to fix
-                       raise
+                    #attempt to reconnect if the api call fails, could be because of timeouts
+                    conn.reconnect()
+                    try:
+                        if verbose:
+                            print "adding package %d to %s" % (pid, channel)
+                        conn.client.channel.software.addPackages(conn.key,channel, [ pid ])
+                    except :
+                        #unknown issue to fix
+                        raise
+                    pass
         else:
             if verbose:
                 print "skipping %s : Red Hat channel" % (channel)
