@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.9.2d"
+__version__ = "0.9.3"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -33,6 +33,7 @@ class RHNSConnection:
     key = None
     client = None
     closed = False
+    orgid = 1
 
     def __init__(self,username,password,host):
         """connects to the satellite db with given parameters"""
@@ -42,6 +43,9 @@ class RHNSConnection:
         self.username = username
         self.__password = password
         self.host = host
+        #store the orgid
+        userdetails = self.client.user.getDetails(self.key,self.username)
+        self.orgid = userdetails['org_id']
         pass
 
     def reconnect(self):
@@ -63,6 +67,18 @@ class RHNSConnection:
             for channel in self.client.channel.listRedHatChannels(self.key):
                 self.rh_channels.append(channel["label"])
         return self.rh_channels
+
+    def channel_exists(self,label):
+        """checks if a channel exists. returns true or false and reuses previous results"""
+        if not hasattr(self, 'channels'):
+            self.channels = []
+            for channel in self.client.channel.listAllChannels(self.key):
+                self.channels.append(channel["label"])
+        if label in self.channels:
+            return True
+        else:
+            return False
+
 
     def __exit__(self):
         """closes connection on exit"""
@@ -261,7 +277,7 @@ def _api_add(pid, channels, conn):
     for pchannel in pchannels:
         lpchannels.append(pchannel['label'])
     for channel in channels:
-        if channel not in conn.get_redhat_channels():
+        if channel not in conn.get_redhat_channels() and conn.channel_exists(channel):
             if channel in lpchannels:
                 print "skipping : package %d already in %s" % (pid, channel)
             else:
@@ -280,9 +296,10 @@ def _api_add(pid, channels, conn):
                         #unknown issue to fix
                         raise
                     pass
-        else:
-            if verbose:
-                print "skipping %s : Red Hat channel" % (channel)
+        elif verbose and conn.channel_exists(channel):
+            print "skipping %s : Red Hat channel " % (channel)
+        elif verbose:
+            print "skipping %s : Does not exist in the satellite" % (channel)
 
             
 
