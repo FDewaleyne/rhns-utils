@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.9.2c"
+__version__ = "0.9.2d"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -58,11 +58,11 @@ class RHNSConnection:
 
     def get_redhat_channels(self):
         """returns the list of red hat channels. if that has already been called, returns the same value as previously"""
-        if not hasattr(self, '__rh_channels'):
-            self.__rh_channels = []
+        if not hasattr(self, 'rh_channels'):
+            self.rh_channels = []
             for channel in self.client.channel.listRedHatChannels(self.key):
-                self.__rh_channels.append(channel["label"])
-        return self.__rh_channels
+                self.rh_channels.append(channel["label"])
+        return self.rh_channels
 
     def __exit__(self):
         """closes connection on exit"""
