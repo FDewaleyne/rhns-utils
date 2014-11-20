@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.9.4"
+__version__ = "0.10.0"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -34,6 +34,7 @@ class RHNSConnection:
     client = None
     closed = False
     orgid = 1
+    __channel_queues = {}
 
     def __init__(self,username,password,host):
         """connects to the satellite db with given parameters"""
@@ -79,8 +80,55 @@ class RHNSConnection:
         else:
             return False
 
+    def queue_to_channel(self, pid, channel):
+        """adds a package to the queue for that channel, if it isn't already queued"""
+        if not channel in self.__channel_queues:
+            self.__channel_queues[channel] = []
+        if not pid in self.__channel_queues[channel]:
+            self.__channel_queues[channel].append(pid)
 
-    def __exit__(self):
+    def __process(self, clabel):
+        """processes one list of packages in one call to clabel, attempting two times"""
+        try:
+            self.client.channel.software.addPackages(self.key, clabel, self.__channel_queues[clabel])
+        except:
+            #try one more time on a new connection then raise or continue
+            try:
+                self.reconnect()
+                self.client.channel.software.addPackages(self.key, clabel, self.__channel_queues[clabel])
+            except:
+                raise
+            pass
+
+    def process_queues(self,ppc = 100):
+        """processes the queues one by one, 100 packages at a time (ppc setting) - if using 0, process each channel in one call.."""
+        for cqueue in self.__channel_queues:
+            print "running queue for %s" % (cqueue)
+            if self.__channel_queues[cqueue] / ppc < 1:
+                print "less than %d packages queued, running in one call to add all %d" % (ppc, len(self.__channel_queues[cqueue]))
+                self.__process(self.__channel_queues[cqueue])
+            elif ppc == 0:
+                print "processing as is with %d packages queued" % (len(self.__channel_queues[cqueue]))
+                self.__process(self.__channel_queues[cqueue])
+            else:
+                rqueue = self.__channel_queues[cqueue]
+                queue = []
+                pos = ppc
+                print "%d of %d" % (0, len(self.__channel_queues[cqueue]))
+                while len(rqueue) > 0:
+                    #process the queue pcc elements a time
+                    if len(rqueue) > ppc:
+                        queue, rqueue = rqueue[:ppc], queue[ppc:]
+                    else:
+                        #rqueue is ppc or less long, store all into queue and leave nothing into rqueue
+                        queue, rqueue = rqueue, []
+                    print '\r'+"%d of %d" % (pos, len(self.__channel_queues[cqueue]))
+                    self.__process(queue)
+                    pos += ppc
+                print ""
+        pass
+
+    def __exit__(self, type, value, tb):
         """closes connection on exit"""
         if not self.closed :
             self.client.auth.logout(self.key)
@@ -132,8 +180,7 @@ class PackagesInfo:
             if verbose:
                 print "%s found in %s" % (_pkgname(packageinfo), channel)
 
-
-    def __exit__(self):
+    def __exit__(self, type, value, tb):
         """closes file on exit"""
         if not self.bkpfile.closed:
             self.bkpfile.close()
@@ -289,25 +336,16 @@ def _api_add(pid, channels, conn):
             if channel in lpchannels:
                 print "skipping : package %d already in %s" % (pid, channel)
             else:
-                try:
-                    if verbose:
-                        print "adding package %d to %s" % (pid, channel)
-                    conn.client.channel.software.addPackages(conn.key,channel, [ pid ])
-                except:
-                    #attempt to reconnect if the api call fails, could be because of timeouts
-                    try:
-                        if verbose:
-                            print "adding package %d to %s" % (pid, channel)
-                        conn.reconnect()
-                        conn.client.channel.software.addPackages(conn.key,channel, [ pid ])
-                    except :
-                        #unknown issue to fix
-                        raise
-                    pass
+                if verbose:
+                    print "queueing package %d to %s" % (pid, channel)
+                conn.queue_to_channel(pid,channel)
         elif verbose and conn.channel_exists(channel):
             print "skipping %s : Red Hat channel " % (channel)
         elif verbose:
             print "skipping %s : Does not exist in the satellite" % (channel)
+    print "processing all queues"
+    #todo : implement option to change the number of packge per request by passing the value to this call
+    conn.process_queues()
 
             
 
