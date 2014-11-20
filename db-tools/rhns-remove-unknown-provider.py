@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.9.3"
+__version__ = "0.9.4"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -23,7 +23,7 @@ __status__ = "beta"
 # On the next call it loads the list and tries to find the packages one by one in the satellite to clone them in the channels they were removed from
 # best not used on other versions thatn 5.6 currently
 
-import xmlrpclib, re
+import xmlrpclib
 
 #connector class -used to initiate a connection to a satellite and to send the proper satellite the proper commands
 class RHNSConnection:
@@ -272,7 +272,15 @@ def _lucenestr(i):
 def _api_add(pid, channels, conn):
     """adds a package into all those channels"""
     global verbose
-    pchannels = conn.client.packages.listProvidingChannels(conn.key, pid)
+    try:
+        pchannels = conn.client.packages.listProvidingChannels(conn.key, pid)
+    except:
+        try:
+            conn.reconnect()
+            pchannels = conn.client.packages.listProvidingChannels(conn.key, pid)
+        except:
+            raise
+        pass
     lpchannels = []
     for pchannel in pchannels:
         lpchannels.append(pchannel['label'])
@@ -287,10 +295,10 @@ def _api_add(pid, channels, conn):
                     conn.client.channel.software.addPackages(conn.key,channel, [ pid ])
                 except:
                     #attempt to reconnect if the api call fails, could be because of timeouts
-                    conn.reconnect()
                     try:
                         if verbose:
                             print "adding package %d to %s" % (pid, channel)
+                        conn.reconnect()
                         conn.client.channel.software.addPackages(conn.key,channel, [ pid ])
                     except :
                         #unknown issue to fix
@@ -352,7 +360,16 @@ def api_restore(bkp,conn):
         matched = False
         channels = bkp.packages[package]['channels']
         infos = bkp.packages[package]['packageinfo']
-        pkgmatches = conn.client.packages.search.advanced(conn.key, _lucenestr(infos))
+        try:
+            pkgmatches = conn.client.packages.search.advanced(conn.key, _lucenestr(infos))
+        except:
+            #timeout problem, try again with a new session
+            try:
+                conn.reconnect()
+                pkgmatches = conn.client.packages.search.advanced(conn.key, _lucenestr(infos))
+            except:
+                raise
+            pass
         for match in pkgmatches:
             if match['provider'] == "Red Hat Inc.":
                 #if this is the correct provider
@@ -386,12 +403,25 @@ def api_restore_alt(bkp,conn):
         matched = False
         channels = bkp.packages[package]['channels']
         infos = bkp.packages[package]['packageinfo']
-        if infos['epoch'] is None:
-            #no need to replace arch here. infos is data from the db.
-            pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], '' , infos['arch'])
-        else:
-            #no need to replace arch here. infos is data from the db.
-            pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], infos['epoch'], infos['arch'])
+        try:
+            if infos['epoch'] is None:
+                #no need to replace arch here. infos is data from the db.
+                pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], '' , infos['arch'])
+            else:
+                #no need to replace arch here. infos is data from the db.
+                pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], infos['epoch'], infos['arch'])
+        except:
+            try:
+                conn.reconnect()
+                if infos['epoch'] is None:
+                    #no need to replace arch here. infos is data from the db.
+                    pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], '' , infos['arch'])
+                else:
+                    #no need to replace arch here. infos is data from the db.
+                    pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], infos['epoch'], infos['arch'])
+            except:
+                raise
+            pass
         for match in pkgmatches:
             if match['provider'] == "Red Hat Inc.":
                 #if this is the correct provider
