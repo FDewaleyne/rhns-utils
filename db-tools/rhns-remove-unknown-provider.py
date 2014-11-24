@@ -176,9 +176,12 @@ class PackagesInfo:
             elif verbose:
                 print "%s already recorded as being in %s" % (_pkgname(packageinfo), channel)
         else:
-            self.packages[package_id] = {'channels': [channel], 'packageinfo': packageinfo}
-            if verbose:
-                print "%s found in %s" % (_pkgname(packageinfo), channel)
+            if channel is not None:
+                self.packages[package_id] = {'channels': [channel], 'packageinfo': packageinfo}
+                if verbose:
+                    print "%s found in %s" % (_pkgname(packageinfo), channel)
+            elif verbose:
+                print "%s is a package that is in no channel - omitting from backup" % (_pkgname(packageinfo))
 
     def __exit__(self, type, value, tb):
         """closes file on exit"""
