@@ -157,7 +157,7 @@ class PackagesInfo:
 
     def save(self):
         """saves package list to file using pickle"""
-        pickle.dump(self.packages,self.bkpfile)
+        pickle.dump(self.packages, self.bkpfile)
 
     def list(self):
         """prints the contents of the package list currently loaded"""
