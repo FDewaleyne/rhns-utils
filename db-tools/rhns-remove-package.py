@@ -548,6 +548,7 @@ def main(versioninfo):
     advanced_group.add_option("--remove", dest="remove", action="store_true", default=False, help="Removes the rpms after taking a backup - requires confirmation at runtime")
     advanced_group.add_option("--restore", dest="restore", action="store_true", default=False, help="Attempts to add back the rpms from the backup - the packages must have been re-added correctly to the satellite before use.")
     advanced_group.add_option("--restore-alt", dest="restore_alt", action="store_true", default=False, help="Attempts to add back the rpms from the backup - the packages must have been re-added correctly to the satellite before use.\n Uses an alternative method for the search")
+    advanced_group.add_option("--cleanup", dest="cleanup", action="store_true", default=False, help="Clears packages that don't have a channel from the backup file")
     parser.add_option_group(connect_group)
     parser.add_option_group(global_group)
     parser.add_option_group(advanced_group)
