@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.10.0"
+__version__ = "0.10.1"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -212,8 +212,7 @@ def db_backup(bkp):
         rpe.epoch as "package_epoch",
         rpa.label as "package_arch",
         rc.label as "channel_label",
-        rc.id as "channel_id",
-        coalesce((select name from rhnpackageprovider rpp where rpp.id = rpk.provider_id),'Unknown') as "provider"
+        rc.id as "channel_id"
     from rhnpackage rp
         inner join rhnpackagename rpn on rpn.id = rp.name_id
         inner join rhnpackageevr rpe on rpe.id = rp.evr_id
@@ -221,7 +220,6 @@ def db_backup(bkp):
         left outer join rhnchannelpackage rcp on rcp.package_id = rp.id
         left outer join rhnchannel rc on rc.id = rcp.channel_id
         left outer join rhnpackagekeyassociation rpka on rpka.package_id = rp.id
-        left outer join rhnpackagekey rpk on rpk.id = rpka.key_id
     where rpka.key_id is null
     order by 2, 3
     """
