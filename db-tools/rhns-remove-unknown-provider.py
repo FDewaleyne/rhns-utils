@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.10.1"
+__version__ = "0.10.2"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -36,23 +36,23 @@ class RHNSConnection:
     orgid = 1
     __channel_queues = {}
 
-    def __init__(self,username,password,host):
+    def __init__(self, username, password, host):
         """connects to the satellite db with given parameters"""
         URL = "https://%s/rpc/api" % host
         self.client = xmlrpclib.Server(URL)
-        self.key = self.client.auth.login(username,password)
+        self.key = self.client.auth.login(username, password)
         self.username = username
         self.__password = password
         self.host = host
         #store the orgid
-        userdetails = self.client.user.getDetails(self.key,self.username)
+        userdetails = self.client.user.getDetails(self.key, self.username)
         self.orgid = userdetails['org_id']
         pass
 
     def reconnect(self):
         """re-establishes the connection"""
         self.client = xmlrpclib.Server("https://%s/rpc/api" % self.host)
-        self.key = self.client.auth.login(self.username,self.__password)
+        self.key = self.client.auth.login(self.username, self.__password)
         pass
 
     def close(self):
@@ -174,7 +174,7 @@ class PackagesInfo:
                 if verbose:
                     print "%s found in %s" % (_pkgname(packageinfo), channel)
             elif verbose:
-                print "%s already recorded as being in %s" % (_pkgname(packageinfo),channel)
+                print "%s already recorded as being in %s" % (_pkgname(packageinfo), channel)
         else:
             self.packages[package_id] = {'channels': [channel], 'packageinfo': packageinfo}
             if verbose:
@@ -231,7 +231,7 @@ def db_backup(bkp):
         c = 0
         for row in rows:
             c += 1
-            bkp.add(row['package_id'],row['channel_label'], {'name': row['package_name'], 'version': row['package_version'] ,'release': row['package_release'], 'epoch': row['package_epoch'], 'arch': row['package_arch']})
+            bkp.add(row['package_id'],row['channel_label'], {'name': row['package_name'], 'version': row['package_version'], 'release': row['package_release'], 'epoch': row['package_epoch'], 'arch': row['package_arch']})
             if not verbose:
                 print "\r%s of %s" % (str(c), str(len(rows))),
         if not verbose:
@@ -256,7 +256,6 @@ def db_clean(bkp):
     db_backup(bkp)
     bkp.save()
     rhnSQL.initDB()
-    pids=[]
     queryA = """
     delete from rhnchannelpackage where package_id in (
         select distinct rp.id as "pid"
@@ -303,7 +302,7 @@ def _pkgname(h):
     if h['epoch'] in [None, '']:
         return "%s-%s-%s.%s" % (h['name'], str(h['version']) ,str(h['release']), h.get('arch',h.get('arch_label')))
     else:
-        return "%s:%s-%s-%s.%s" % (str(h['epoch']), h['name'], str(h['version']) ,str(h['release']), h.get('arch',h.get('arch_label')))
+        return "%s:%s-%s-%s.%s" % (str(h['epoch']), h['name'], str(h['version']), str(h['release']), h.get('arch',h.get('arch_label')))
 
 def _lucenestr(i):
     """returns a lucene search string depending on the values given"""
@@ -423,7 +422,7 @@ def api_restore(bkp,conn):
                     break
             else:
                 if verbose:
-                    print "match %s of provider %s discarded" % (_pkgname(match),match['provider'])
+                    print "match %s of provider %s discarded" % (_pkgname(match), match['provider'])
                 continue
         else:
             print "no match found for package %s" % (_pkgname(infos)) 
@@ -475,7 +474,7 @@ def api_restore_alt(bkp,conn):
                     break
             else:
                 if verbose:
-                    print "match %s of provider %s discarded" % (_pkgname(match),match['provider'])
+                    print "match %s of provider %s discarded" % (_pkgname(match), match['provider'])
                 continue
         else:
             print "no match found for package %s" % (_pkgname(infos)) 
