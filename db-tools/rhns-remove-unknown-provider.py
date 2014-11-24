@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.11.1"
+__version__ = "0.11.1b"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -553,8 +553,8 @@ def main(versioninfo):
     #connection details
     connect_group = optparse.OptionGroup(parser, "Connection options", "Those options are required when running the restore part")
     connect_group.add_option("-H", "--host", dest="sathost", type="string", help="hostname of the satellite to use - use if localhost does not work", default="localhost")
-    connect_group.add_option("-l", "--login", dest="satuser", type="string", help="User to connect to the satellite API")
-    connect_group.add_option("-p", "--password", dest="satpwd", type="string", help="Password to connect to the satellite API")
+    connect_group.add_option("-L", "--login", dest="satuser", type="string", help="User to connect to the satellite API")
+    connect_group.add_option("-P", "--password", dest="satpwd", type="string", help="Password to connect to the satellite API")
     #group for the special actions
     advanced_group = optparse.OptionGroup(parser, "Actions", "Use only one of those")
     advanced_group.add_option("--list", dest="list", action="store_true", default=False, help="Loads the backup file and  lists its contents")
