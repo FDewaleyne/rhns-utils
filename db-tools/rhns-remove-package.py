@@ -165,7 +165,7 @@ class PackagesInfo:
         for package in self.packages:
             print "package %s in channels %s" % (_pkgname(self.packages[package]['packageinfo']), ', '.join(self.packages[package]['channels']))
 
-    def add(self,package_id,channel,packageinfo):
+    def add(self, package_id, channel, packageinfo):
         """adds a package and associated channel to the object"""
         global verbose
         if package_id in self.packages:
@@ -176,9 +176,24 @@ class PackagesInfo:
             elif verbose:
                 print "%s already recorded as being in %s" % (_pkgname(packageinfo), channel)
         else:
-            self.packages[package_id] = {'channels': [channel], 'packageinfo': packageinfo}
-            if verbose:
-                print "%s found in %s" % (_pkgname(packageinfo), channel)
+            if channel is not None:
+                self.packages[package_id] = {'channels': [channel], 'packageinfo': packageinfo}
+                if verbose:
+                    print "%s found in %s" % (_pkgname(packageinfo), channel)
+            elif verbose:
+                print "%s is a package that is in no channel - omitting from backup" % (_pkgname(packageinfo))
+
+    def cleanup(self):
+        """removes packages with empty channels from the packages dictionary"""
+        global verbose
+        to_remove = []
+        for package in self.packages:
+            if self.packages[package] == [None] or len(self.packages[package]) == 0:
+                to_remove.append(package)
+        for package in to_remove:
+            del self.packages[package]
+        if verbose:
+            print "removed %d packages found having no channels from the backup" % (len(to_remove))
 
     def __exit__(self, type, value, tb):
         """closes file on exit"""
@@ -373,7 +388,7 @@ def _cmp_pkginfo(a,b):
 
 
 
-def api_restore(bkp,conn):
+def api_restore(bkp, conn):
     """attempts to re-add the packages using the data exported into the bkp"""
     global verbose
     for package in bkp.packages:
@@ -407,13 +422,56 @@ def api_restore(bkp,conn):
                     break
             else:
                 if verbose:
-                    print "match %s of provider %s discarded" % (_pkgname(match),match['provider'])
+                    print "match %s of provider %s discarded" % (_pkgname(match), match['provider'])
                 continue
         else:
-            print "no match found for package %s" % (_pkgname(infos)) 
+            #fallback to packages.findByNvrea because there were no matches
+            if verbose:
+                print "no match found for package %s with lucene, falling back to packages.findByNvrea" % (_pkgname(infos))
+            try:
+                if infos['epoch'] is None:
+                    #no need to replace arch here. infos is data from the db.
+                    pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], '' , infos['arch'])
+                else:
+                    #no need to replace arch here. infos is data from the db.
+                    pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], infos['epoch'], infos['arch'])
+            except:
+                try:
+                    conn.reconnect()
+                    if infos['epoch'] is None:
+                        #no need to replace arch here. infos is data from the db.
+                        pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], '' , infos['arch'])
+                    else:
+                        #no need to replace arch here. infos is data from the db.
+                        pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], infos['epoch'], infos['arch'])
+                except:
+                    raise
+                pass
+            for match in pkgmatches:
+                if match['provider'] == "Red Hat Inc.":
+                    #if this is the correct provider
+                    if match['id'] == package:
+                        #if that is the same id as the package just add that and move on
+                        if verbose:
+                            print "match has same ID as stored, restoring"
+                        _api_add(match['id'], channels, conn)
+                        matched = True
+                        break
+                    elif _cmp_pkginfo(match,infos):
+                        #if that is the same package...
+                        _api_add(match['id'], channels, conn)
+                        matched = True
+                        break
+                else:
+                    if verbose:
+                        print "match %s of provider %s discarded" % (_pkgname(match), match['provider'])
+                    continue
+            else:
+                print "no match found for package %s" % (_pkgname(infos)) 
         if matched:
             print "matched %s" %(_pkgname(infos))
-        elif len(pkgmatches) >= 1:
+        elif len(pkgmatches) >= 1 and verbose:
+            #this will always be with either lucene that has found 0 matches or with the packages.findByNvrea method
             print "no match found for package %s within %d results" % (_pkgname(infos), len(pkgmatches))
 
 def api_restore_alt(bkp,conn):
@@ -498,6 +556,10 @@ def main(versioninfo):
     verbose = options.verbose
     if not options.backupfile:
         parser.error('The backup file needs to be specified')
+    elif options.cleanup:
+        bkphandle = PackagesInfo(options.backupfile)
+        bkphandle.cleanup()
+        bkphandle.save()
     elif options.restore:
         if not options.satuser or not options.satpwd:
             parser.error('Username and password are required options when restoring the removed packages')
