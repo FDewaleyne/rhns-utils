@@ -13,4 +13,7 @@ This script adds to a channel packages based on criteria - it is meant to help r
 
 ---
 **rhns-remove-unknown-provider.py**
-This script is dangerous - it exports the list of packages that have no signature and are in red hat channels (and other channels) then can be ran to remove the content. This should replace the `package-consistancy-checker.py` in this aspect only. Part of its queries may make their way to ` spacewalk-fsck` but I am not so sure it would be such a good idea (it would burn beta channels!). [More information on this script is available on the wiki](https://github.com/FDewaleyne/rhns-utils/wiki/rhns-remove-unknown-provider)
+This script is dangerous - it exports the channel relations of a set of packages that have no signature and are in red hat channels (and other channels) then can be ran to remove the content. This should replace the `package-consistancy-checker.py` in this aspect only. Part of its queries may make their way to ` spacewalk-fsck` but I am not so sure it would be such a good idea (it would burn beta channels!). [More information on this script is available on the wiki](https://github.com/FDewaleyne/rhns-utils/wiki/rhns-remove-unknown-provider)
+---
+**rhns-remove-package.py**
+This script is dangerous - it exports the channel relations of a package then can remove the content requested. This should replace the `package-consistancy-checker.py` in this aspect only. Part of its queries may make their way to ` spacewalk-fsck` but I am not so sure it would be such a good idea (it would burn beta channels!). [More information on this script is available on the wiki](https://github.com/FDewaleyne/rhns-utils/wiki/rhns-remove-package) - for usage on one single package.
