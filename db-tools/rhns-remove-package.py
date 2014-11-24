@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -518,16 +518,16 @@ def main(versioninfo):
     elif options.backup and options.pid:
         #init of the config required in the db functions
         rhnConfig.initCFG()
-        bkphandle = PackagesInfo(options.backupfile, options.pid)
-        db_backup(bkphandle)
+        bkphandle = PackagesInfo(options.backupfile)
+        db_backup(bkphandle, options.pid)
         bkphandle.save()
     elif options.remove and options.pid:
         #init of the config required in the db functions
         rhnConfig.initCFG()
-        bkphandle = PackagesInfo(options.backupfile, options.pid)
-        db_clean(bkphandle)
+        bkphandle = PackagesInfo(options.backupfile)
+        db_clean(bkphandle, options.pid)
     else:
-        parser.error('You need to specify an action - don't forget to specify --pid either')
+        parser.error("You need to specify an action - don't forget to specify --pid either")
 
 if __name__ == "__main__":
     main(__version__)
