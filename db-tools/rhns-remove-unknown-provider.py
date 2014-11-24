@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.11.0"
+__version__ = "0.11.1"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -182,6 +182,18 @@ class PackagesInfo:
                     print "%s found in %s" % (_pkgname(packageinfo), channel)
             elif verbose:
                 print "%s is a package that is in no channel - omitting from backup" % (_pkgname(packageinfo))
+
+    def cleanup(self):
+        """removes packages with empty channels from the packages dictionary"""
+        global verbose
+        to_remove = []
+        for package in self.packages:
+            if self.packages[package] == [None] or len(self.packages[package]) == 0:
+                to_remove.append(package)
+        for package in to_remove:
+            del self.packages[package]
+        if verbose:
+            print "removed %d packages found having no channels from the backup" % (len(to_remove))
 
     def __exit__(self, type, value, tb):
         """closes file on exit"""
@@ -550,6 +562,7 @@ def main(versioninfo):
     advanced_group.add_option("--remove", dest="remove", action="store_true", default=False, help="Removes the rpms after taking a backup - requires confirmation at runtime")
     advanced_group.add_option("--restore", dest="restore", action="store_true", default=False, help="Attempts to add back the rpms from the backup - the packages must have been re-added correctly to the satellite before use.")
     advanced_group.add_option("--restore-alt", dest="restore_alt", action="store_true", default=False, help="Attempts to add back the rpms from the backup - the packages must have been re-added correctly to the satellite before use.\n Uses an alternative method for the search")
+    advanced_group.add_option("--cleanup", dest="cleanup", action="store_true", default=False, help="Clears packages that don't have a channel from the backup file")
     parser.add_option_group(connect_group)
     parser.add_option_group(global_group)
     parser.add_option_group(advanced_group)
@@ -558,6 +571,10 @@ def main(versioninfo):
     verbose = options.verbose
     if not options.backupfile:
         parser.error('The backup file needs to be specified')
+    elif options.cleanup:
+        bkphandle = PackagesInfo(options.backupfile)
+        bkphandle.cleanup()
+        bkphandle.save()
     elif options.restore:
         if not options.satuser or not options.satpwd:
             parser.error('Username and password are required options when restoring the removed packages')
