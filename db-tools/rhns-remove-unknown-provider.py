@@ -165,7 +165,7 @@ class PackagesInfo:
         for package in self.packages:
             print "package %s in channels %s" % (_pkgname(self.packages[package]['packageinfo']), ', '.join(self.packages[package]['channels']))
 
-    def add(self,package_id,channel,packageinfo):
+    def add(self, package_id, channel, packageinfo):
         """adds a package and associated channel to the object"""
         global verbose
         if package_id in self.packages:
@@ -403,7 +403,7 @@ def _cmp_pkginfo(a,b):
 
 
 
-def api_restore(bkp,conn):
+def api_restore(bkp, conn):
     """attempts to re-add the packages using the data exported into the bkp"""
     global verbose
     for package in bkp.packages:
