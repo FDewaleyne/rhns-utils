@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.10.2"
+__version__ = "0.11.0"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -428,10 +428,53 @@ def api_restore(bkp,conn):
                     print "match %s of provider %s discarded" % (_pkgname(match), match['provider'])
                 continue
         else:
-            print "no match found for package %s" % (_pkgname(infos)) 
+            #fallback to packages.findByNvrea because there were no matches
+            if verbose:
+                print "no match found for package %s with lucene, falling back to packages.findByNvrea" % (_pkgname(infos))
+            try:
+                if infos['epoch'] is None:
+                    #no need to replace arch here. infos is data from the db.
+                    pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], '' , infos['arch'])
+                else:
+                    #no need to replace arch here. infos is data from the db.
+                    pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], infos['epoch'], infos['arch'])
+            except:
+                try:
+                    conn.reconnect()
+                    if infos['epoch'] is None:
+                        #no need to replace arch here. infos is data from the db.
+                        pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], '' , infos['arch'])
+                    else:
+                        #no need to replace arch here. infos is data from the db.
+                        pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], infos['epoch'], infos['arch'])
+                except:
+                    raise
+                pass
+            for match in pkgmatches:
+                if match['provider'] == "Red Hat Inc.":
+                    #if this is the correct provider
+                    if match['id'] == package:
+                        #if that is the same id as the package just add that and move on
+                        if verbose:
+                            print "match has same ID as stored, restoring"
+                        _api_add(match['id'], channels, conn)
+                        matched = True
+                        break
+                    elif _cmp_pkginfo(match,infos):
+                        #if that is the same package...
+                        _api_add(match['id'], channels, conn)
+                        matched = True
+                        break
+                else:
+                    if verbose:
+                        print "match %s of provider %s discarded" % (_pkgname(match), match['provider'])
+                    continue
+            else:
+                print "no match found for package %s" % (_pkgname(infos)) 
         if matched:
             print "matched %s" %(_pkgname(infos))
-        elif len(pkgmatches) >= 1:
+        elif len(pkgmatches) >= 1 and verbose:
+            #this will always be with either lucene that has found 0 matches or with the packages.findByNvrea method
             print "no match found for package %s within %d results" % (_pkgname(infos), len(pkgmatches))
 
 def api_restore_alt(bkp,conn):
