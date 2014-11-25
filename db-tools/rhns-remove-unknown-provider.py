@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.11.1b"
+__version__ = "0.11.1c"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -218,6 +218,7 @@ except ImportError:
 def db_backup(bkp):
     """captures the data from the db and stores it in the backup"""
     rhnSQL.initDB()
+    # selects all packages that are from unknown providers
     query = """
     select  
         rp.id as "package_id", 
@@ -271,6 +272,7 @@ def db_clean(bkp):
     db_backup(bkp)
     bkp.save()
     rhnSQL.initDB()
+    # delete from rhnchannelpackage entries that have an unknown provider and are packages in a RH channel
     queryA = """
     delete from rhnchannelpackage where package_id in (
         select distinct rp.id as "pid"
@@ -282,14 +284,13 @@ def db_clean(bkp):
         where rpka.key_id is null and rc.channel_product_id is not null
     )
     """
+    # delete rhnpackage entries not in any channel
     queryB = """
     delete from rhnpackage where id in (
         select distinct rp.id as "pid"
         from rhnpackage rp
             left outer join rhnchannelpackage rcp on rcp.package_id = rp.id  
             left outer join rhnchannel rc on rc.id = rcp.channel_id  
-            left outer join rhnpackagekeyassociation rpka on rpka.package_id = rp.id  
-            left outer join rhnpackagekey rpk on rpk.id = rpka.key_id  
         where rcp.channel_id is null
     )
     """
