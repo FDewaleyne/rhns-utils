@@ -4,10 +4,10 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.1beta"
+__version__ = "0.2"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
-__status__ = "prod"
+__status__ = "beta"
 
 
 def package_details(packageid):
@@ -29,22 +29,22 @@ def package_details(packageid):
     rhnSQL.initDB()
 
    query="""
-    select  
-        rp.id as "package_id",  
-        rpn.name||'-'||rpe.version||'-'||rpe.release||'.'||rpa.label as "package",  
-        rc.label as "channel_label",  
-        rc.id as "channel_id",  
-        coalesce((select name from rhnpackageprovider rpp where rpp.id = rpk.provider_id),'Unknown') as "provider"  
-    from rhnpackage rp  
-        inner join rhnpackagename rpn on rpn.id = rp.name_id  
-        inner join rhnpackageevr rpe on rpe.id = rp.evr_id  
-        inner join rhnpackagearch rpa on rpa.id = rp.package_arch_id  
-        left outer join rhnchannelpackage rcp on rcp.package_id = rp.id  
-        left outer join rhnchannel rc on rc.id = rcp.channel_id  
-        left outer join rhnpackagekeyassociation rpka on rpka.package_id = rp.id  
-        inner join rhnpackagekey rpk on rpk.id = rpka.key_id  
-    where rp.id = :packageid  
-        order by 2, 3;  
+    select
+      rp.id as "package_id",
+      rpn.name||'-'||rpe.version||'-'||rpe.release||'.'||rpa.label as "package",
+      rc.label as "channel_label",
+      rc.id as "channel_id",
+      coalesce((select name from rhnpackageprovider rpp where rpp.id = rpk.provider_id),'Unknown') as "provider"  
+    from rhnpackage rp
+      inner join rhnpackagename rpn on rpn.id = rp.name_id
+      inner join rhnpackageevr rpe on rpe.id = rp.evr_id
+      inner join rhnpackagearch rpa on rpa.id = rp.package_arch_id
+      left outer join rhnchannelpackage rcp on rcp.package_id = rp.id
+      left outer join rhnchannel rc on rc.id = rcp.channel_id
+      left outer join rhnpackagekeyassociation rpka on rpka.package_id = rp.id
+      left outer join rhnpackagekey rpk on rpk.id = rpka.key_id
+    where rp.id = :packageid
+    order by 2, 3
     """
     cursor = dbaccess.prepare(query)
     cursor.execute(packageid=packageid)
