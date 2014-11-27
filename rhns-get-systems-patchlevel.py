@@ -220,17 +220,14 @@ def main(version):
         systemid = options.systemid
     #session init
     conn = RHNSConnection(options.satuser,options.satpwd,options.saturl,options.satorg)
-    #TODO: rewrite here
-    if options.erratatype == None:
-        data = process_all_erratas(conn,systemid)
-    elif options.erratatype in ('Security Advisory','security advisory', 'security'):
-        data = process_some_erratas(conn,systemid,'Security Advisory')
-    elif options.erratatype in ('Product Enhancement Advisory', 'product enhancement advisory', 'enhancement'):
-        data = process_some_erratas(conn,systemid,'Product Enhancement Advisory')
-    elif options.erratatype in ('Bug Fix Advisory', 'bug fix advisory', 'bugfix'):
-        data = process_some_erratas(conn,systemid,'Bug Fix Advisory')
+    if options.systemid == None:
+        #process all erratas for a system
+        #TODO : replace
+        data = process_all_erratas(conn, systemid)
     else:
-        sys.exit("Incorrect errata type, use 'Security Advisory', 'Product Enhancement Advisory' or 'Bug Fix Advisory' ; also accepted the shortenned versions 'security', 'enhangement' and 'bugfix'")
+        #process all erratas for all systems
+        #TODO : replace
+        data = process_all_erratas(conn)
     conn.close()
     if options.output == None:
         print_data(data)
