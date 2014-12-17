@@ -9,10 +9,10 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.1"
+__version__ = "1.0"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
-__status__ = "beta"
+__status__ = "prod"
 
 
 import xmlrpclib, sys
@@ -30,7 +30,7 @@ class RHNSConnection:
     def __init__(self,username,password,host,orgname="baseorg"):
         """connects to the satellite db with given parameters"""
         #read configuration
-        import ConfigParser,os,re
+        import ConfigParser, os, re
         config = ConfigParser.ConfigParser()
         config.read(['.satellite', os.path.expanduser('~/.satellite'), '/etc/sysconfig/rhn/satellite'])
         #decide what variable to use for the URL
@@ -46,10 +46,10 @@ class RHNSConnection:
         else:
             #a hostname or url was given in command line. parse it to see if it is correct.
             self.url = host
-            if re.match('^http(s)?://[\w\-.]+/rpc/api',self.url) == None:
+            if re.match('^http(s)?://[\w\-.]+/rpc/api', self.url) == None:
                 #this isn't the full url
                 if re.search('^http(s)?://', self.url) == None:
-                    self.url = "https://"+self.url
+                    self.url = "https://" + self.url
                 if re.search('/rpc/api$', self.url) == None:
                     self.url = self.url+"/rpc/api"
             #if this is the url then nothing has to be done further to URL
@@ -59,7 +59,7 @@ class RHNSConnection:
         if username == None:
             #no username in command line
             if config.has_section(orgname) and config.has_option(orgname, 'username'):
-                self.username = config.get(orgname,'username')
+                self.username = config.get(orgname, 'username')
             else:
                 #not in the config file, we have to prompt it
                 sys.stderr.write("Login details for %s\n\n" % self.url)
@@ -72,11 +72,11 @@ class RHNSConnection:
         if password == None:
             #use the password from the config file
             if config.has_section(orgname) and config.has_option(orgname, 'password'):
-                self.__password = config.get(orgname,'password')
+                self.__password = config.get(orgname, 'password')
             else:
                 #no password set in the configuration file
                 import getpass
-                self.__password = getpass.getpass(prompt="Password: ")
+                self.__password = getpass.getpass( prompt = "Password: ")
                 sys.stderr.write("\n")
         else:
             self.__password = password
@@ -86,22 +86,14 @@ class RHNSConnection:
         try:
             self.satver = self.client.api.systemVersion()
             print "satellite version "+self.satver
-        except:
+        except xmlrpclib.Fault:
             self.satver = None
             print "unable to detect the version"
-        pass
 
     def close(self):
         """closes a connection. item can be destroyed then"""
         self.client.auth.logout(self.key)
         self.closed = True
-        pass
-
-    def __exit__(self):
-        """closes connection on exit"""
-        if not self.closed :
-            self.client.auth.logout(self.key)
-        pass
 
 def get_systemid():
     """fetches the systemid of the system if a systemid file exists"""
@@ -120,51 +112,37 @@ def get_systemid():
         raise
     return int(systemid)
 
-def process_some_erratas(conn,systemid,type):
-    """fetches all erratas for a system, returns the read erratas - one type only : 'Security Advisory', 'Product Enhancement Advisory' or 'Bug Fix Advisory' """
+def process_all_systems(conn):
+    """fetches the list of systems and calls on each the collection that will fill the array, then return the array of systems."""
     data = dict()
-    for errata in conn.client.system.getRelevantErrataByType(conn.key,systemid,type):
-        data[errata['advisory_name']]=errata
-        #contents of an errata at this stage :
-        # - int "id" - Errata ID.
-        # - string "date" - Date erratum was created.
-        # - string "update_date" - Date erratum was updated.
-        # - string "advisory_synopsis" - Summary of the erratum.
-        # - string "advisory_type" - Type label such as Security, Bug Fix
-        # - string "advisory_name" - Name such as RHSA, etc
-    return _read_errata(conn,data)
+    #extract the scores from the api, then adds the name of the system on top of that 
+    for system in conn.client.system.getSystemCurrencyScores(conn.key):
+        data[system['sid']] = _system_facts(system)
+        facts = conn.client.system.getName(system['sid'])
+        data[system['sid']].update({ 'system name': facts['name'], 'id': str(facts['id']), 'last checkin': str(facts['last_checkin'])})
+    return data
 
-def process_all_erratas(conn,systemid):
-    """fetches all erratas for a system, returns the read erratas."""
+def _system_facts(element):
+    """fetches the details of the system and returns them as a dictionary object"""
+    #all updates : numer of updates
+    #security errata : number of security errata
+    #bugfix errata : number of bugfix errata
+    #enhancement errata : number of enhancement errata
     data = dict()
-    for errata in conn.client.system.getRelevantErrata(conn.key,systemid):
-        data[errata['advisory_name']]=errata
-        #contents of an errata at this stage :
-        # - int "id" - Errata ID.
-        # - string "date" - Date erratum was created.
-        # - string "update_date" - Date erratum was updated.
-        # - string "advisory_synopsis" - Summary of the erratum.
-        # - string "advisory_type" - Type label such as Security, Bug Fix
-        # - string "advisory_name" - Name such as RHSA, etc
-    return _read_errata(conn,data)
+    data['all updates'] = element['enh'] + element['imp'] + element['low'] + element['crit'] + element['bug'] + element['mod']
+    data['security errata'] = element['imp'] + element['mod'] + element['low']
+    data['bugfix errata'] = element['bug']
+    data['enhancement errata'] = element['enh']
+    return data
 
-def _read_errata(conn,erratas):
-    """treats the list of erratas and returns the object wanted to be processed for display or csvcreate"""
-    for errata in erratas:
-        #errata is one of the keys in the erratas dict
-        details = conn.client.errata.getDetails(conn.key,errata)
-        #amend erratas with elements of details such as topic, description and product to the data
-        erratas[errata].update({"topic": details['topic'], "description": details['description'], "product": details['product']})
-    return erratas
-
-def csv_create(filename,data):
+def csv_create(filename, data):
     """creates a csv file with the data provided"""
     print "Writing data to the csv file"
-    headers=['advisory_name' , 'advisory_type', 'date', 'advisory_synopsis',  'product', 'topic','description']
+    headers = [ 'system name', 'all updates', 'security errata', 'bugfix errata' , 'enhancement errata', 'last checkin']
     #there may be more information read - depending what is neede
     import csv,re
     csvfile = open(filename, 'wb' )
-    csv_writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
+    csv_writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting = csv.QUOTE_NONNUMERIC)
     csv_writer.writerow(headers)
     #browse the errata data depending on the header
     for errata in data.itervalues():
@@ -178,24 +156,20 @@ def csv_create(filename,data):
                 line.append(errata.get(value))
         csv_writer.writerow(line)
         del line
-    pass
 
 def print_data(data):
     """Displays on screen the information read"""
-    headers=['advisory_name' , 'advisory_type', 'date', 'advisory_synopsis',  'product', 'topic']
-    print " %14s | %28s | %10s | %50s | %50s | %100s" % ('Errata', 'Type', 'Date','Synopsis','Product','Topic')
-    for errata in data.itervalues():
-        print " %14s | %28s | %10s | %50s | %50s | %100s" % (errata['advisory_name'], errata['advisory_type'], str(errata['date']),errata['advisory_synopsis'],errata['product'],errata['topic'])
-    pass
+    print " %50s | %5d | %5d | %5d | %5d | %s" % ('system name', 'all updates', 'security errata', 'bugfix errata' , 'enhancement errata', 'last checkin')
+    for line in data.itervalues():
+        print " %50s | %5d | %5d | %5d | %5d | %s" % (line['system name'], line['all updates'], line['security errata'], line['bugfix errata'], line['enhancement errata'], line['last checkin'])
 
 # start main function
 def main(version):
     """main function - takes in the options and selects the behaviour"""
-    global verbose;
+    global verbose
     import optparse
     parser = optparse.OptionParser("%prog [-s systemid] [-o file.csv]\n Outputs the list of erratas available for a machine depending on the options selected", version=version)
-    parser.add_option("-s", "--systemid", dest="systemid", type="int", default=None, help="Uses that systemid instead of the value extracted from the system's systemid file")
-    parser.add_option("-o", "--output", dest="output",default=None, help="Name of the csv file to generate - if not used, will display output on terminal")
+    parser.add_option("-o", "--output", dest="output", default=None, help="Name of the csv file to generate - if not used, will display output on terminal")
     #connection config group
     connectgroup = optparse.OptionGroup(parser,"Connection Options", "These options can be used to specify what server to connect to")
     connectgroup.add_option("-H", "--url", dest="saturl",default=None, help="URL of the satellite api, e.g. https://satellite.example.com/rpc/api or http://127.0.0.1/rpc/api ; can also be just the hostname or ip of the satellite. Facultative.")
@@ -204,38 +178,23 @@ def main(version):
     connectgroup.add_option("-O", "--org", dest="satorg", default="baseorg", help="name of the organization to use - design the section of the config file to use. Facultative, defaults to %default")
     parser.add_option_group(connectgroup)
     #debug options
-    debuggroup = optparse.OptionGroup(parser,"Debugging Option", "these options can be used to collect debugging information")
-    debuggroup.add_option("-v","--verbose",dest="verbose",default=False,action="store_true",help="activate verbose output")
+    debuggroup = optparse.OptionGroup(parser, "Debugging Option", "these options can be used to collect debugging information")
+    debuggroup.add_option("-v", "--verbose", dest="verbose", default=False,action="store_true", help="activate verbose output")
     parser.add_option_group(debuggroup)
     #parse everything
     (options, args) = parser.parse_args()
     #set verbosity globally
     verbose = options.verbose
-    #set the systemid
-    if options.systemid == None:
-        systemid = get_systemid()
-        if systemid == None:
-            sys.exit("No systemid found on the system - use -s to pass one")
-    else:
-        systemid = options.systemid
     #session init
-    conn = RHNSConnection(options.satuser,options.satpwd,options.saturl,options.satorg)
-    if options.systemid == None:
-        #process all erratas for a system
-        #TODO : replace
-        data = process_all_erratas(conn, systemid)
-    else:
-        #process all erratas for all systems
-        #TODO : replace
-        data = process_all_erratas(conn)
+    conn = RHNSConnection(options.satuser, options.satpwd, options.saturl, options.satorg)
+    data = process_all_systems(conn)
     conn.close()
     if options.output == None:
         print_data(data)
     else:
         if verbose:
             print_data(data)
-        csv_create(options.output,data)
-    pass
+        csv_create(options.output, data)
 
 if __name__ == "__main__":
     main(__version__)
