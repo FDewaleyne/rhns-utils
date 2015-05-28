@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.1.1b"
+__version__ = "0.1.1c"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -47,19 +47,16 @@ class RHNSConnection:
         #store the orgid
         userdetails = self.client.user.getDetails(self.key, self.username)
         self.orgid = userdetails['org_id']
-        pass
 
     def reconnect(self):
         """re-establishes the connection"""
         self.client = xmlrpclib.Server("https://%s/rpc/api" % self.host)
         self.key = self.client.auth.login(self.username, self.__password)
-        pass
 
     def close(self):
         """closes a connection. item can be destroyed then"""
         self.client.auth.logout(self.key)
         self.closed = True
-        pass
 
     def get_redhat_channels(self):
         """returns the list of red hat channels. if that has already been called, returns the same value as previously"""
@@ -98,7 +95,6 @@ class RHNSConnection:
                 self.client.channel.software.addPackages(self.key, clabel, self.__channel_queues[clabel])
             except:
                 raise
-            pass
 
     def process_queues(self,ppc = 100):
         """processes the queues one by one, 100 packages at a time (ppc setting) - if using 0, process each channel in one call.."""
@@ -126,7 +122,6 @@ class RHNSConnection:
                     self.__process(queue)
                     pos += ppc
                 print ""
-        pass
 
     def __exit__(self, type, value, tb):
         """closes connection on exit"""
@@ -269,11 +264,11 @@ def ask(question):
         except ValueError:
             sys.stdout.write('Use \'y\' or \'n\'\n')
 
-def db_clean(bkp,pid):
+def db_clean(bkp, pid):
     answer = ask("Did you take a backup of your database?")
     if not answer:
         print "Taking a backup now"
-        db_backup(bkp,pid)
+        db_backup(bkp, pid)
         bkp.save()
     rhnSQL.initDB()
     pids=[]
@@ -324,7 +319,6 @@ def _api_add(pid, channels, conn):
             pchannels = conn.client.packages.listProvidingChannels(conn.key, pid)
         except:
             raise
-        pass
     lpchannels = []
     for pchannel in pchannels:
         lpchannels.append(pchannel['label'])
@@ -348,7 +342,7 @@ def _api_add(pid, channels, conn):
 
 def _cmp_pkginfo(a,b):
     """logic to compare packages with the output of lucene. required since lucene returns '' instead of None"""
-    global verbose;
+    global verbose
     if a['name'] == b['name'] and a['version'] == b['version'] and a['release'] == b['release'] and a.get('arch',a.get('arch_label')) == b.get('arch',b.get('arch_label')):
         if a['epoch'] in ['',None] and b['epoch'] in ['',None] :
             if verbose:
@@ -404,7 +398,6 @@ def api_restore(bkp, conn):
                 pkgmatches = conn.client.packages.search.advanced(conn.key, _lucenestr(infos))
             except:
                 raise
-            pass
         for match in pkgmatches:
             if match['provider'] == "Red Hat Inc.":
                 #if this is the correct provider
@@ -499,7 +492,6 @@ def api_restore_alt(bkp,conn):
                     pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], infos['epoch'], infos['arch'])
             except:
                 raise
-            pass
         for match in pkgmatches:
             if match['provider'] == "Red Hat Inc.":
                 #if this is the correct provider
