@@ -4,7 +4,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.2"
+__version__ = "0.3"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -28,7 +28,7 @@ def package_details(packageid):
     rhnConfig.initCFG()
     rhnSQL.initDB()
 
-   query="""
+    query="""
     select
       rp.id as "package_id",
       rpn.name||'-'||rpe.version||'-'||rpe.release||'.'||rpa.label as "package",
@@ -46,23 +46,25 @@ def package_details(packageid):
     where rp.id = :packageid
     order by 2, 3
     """
-    cursor = dbaccess.prepare(query)
+    cursor = rhnSQL.prepare(query)
     cursor.execute(packageid=packageid)
     rows = cursor.fetchall_dict()
     if not rows is None:
         c = 0
-        print "Package %d : %s" % (row[0]['package_id'],rows[0]['package'])
+        print "Package %d : %s" % (rows[0]['package_id'], rows[0]['package'])
+        pkg_channels = []
+        pkg_provider = []
         for row in rows:
             c += 1
             if row.channel_id != None:
                 pkg_channels[row['channel_id']] = row['channel_label']
                 pkg_provider[row['channel_id']] = row['provider']
             else:
-                pkg_channel[0] = "Not in a channel"
+                pkg_channels[0] = "Not in a channel"
                 pkg_provider[0] = row['provider']
             print "\r%s of %s" % (str(c), str(len(rows))),
-        print "Provided by channels : %s" % (pkg_channels.join(', '))
-        print "With providers (same order): %s" % (pkg_provider.join(', '))
+        print "Provided by channels : %s" % (', '.join(pkg_channels))
+        print "With providers (same order): %s" % (', '.join(pkg_provider))
     else:
         print "no package found for the id %d" % (packageid)
 
@@ -73,14 +75,13 @@ def main(versioninfo):
     parser = optparse.OptionParser(description="This script will output informations related to a specific package, using the database directly", version="%prog "+versioninfo)
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true", default=False, help="Enables debug output")
     parser.add_option("-p", "--packageid",dest="packageid",type="int",action="store",help="the package ID to get info from")
-    parser.add_option_group(advanced_group)
     (options, args) = parser.parse_args()
-    channel_arch = getChannelArch(options.arch)
     global verbose 
     verbose = options.verbose
     if not options.packageid :
         parser.error('A package ID is required.')
     else:
+        package_details(options.packageid)
         
 
 if __name__ == "__main__":
