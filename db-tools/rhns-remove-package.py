@@ -14,7 +14,7 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.1.1c"
+__version__ = "0.1.1d"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
 __status__ = "beta"
@@ -127,7 +127,6 @@ class RHNSConnection:
         """closes connection on exit"""
         if not self.closed :
             self.client.auth.logout(self.key)
-        pass
 
 import pickle
 #class used to handle the backup information
@@ -213,30 +212,56 @@ except ImportError:
 def db_backup(bkp,pid):
     """captures the data from the db and stores it in the backup"""
     rhnSQL.initDB()
-    query = """
-    select  
-        rp.id as "package_id", 
-        rpn.name as "package_name",
-        rpe.version as "package_version",
-        rpe.release as "package_release",
-        rpe.epoch as "package_epoch",
-        rpa.label as "package_arch",
-        rc.label as "channel_label",
-        rc.id as "channel_id",
-        coalesce((select name from rhnpackageprovider rpp where rpp.id = rpk.provider_id),'Unknown') as "provider"
-    from rhnpackage rp
-        inner join rhnpackagename rpn on rpn.id = rp.name_id
-        inner join rhnpackageevr rpe on rpe.id = rp.evr_id
-        inner join rhnpackagearch rpa on rpa.id = rp.package_arch_id
-        left outer join rhnchannelpackage rcp on rcp.package_id = rp.id
-        left outer join rhnchannel rc on rc.id = rcp.channel_id
-        left outer join rhnpackagekeyassociation rpka on rpka.package_id = rp.id
-        left outer join rhnpackagekey rpk on rpk.id = rpka.key_id
-    where rp.id = :pid
-    order by 2, 3
-    """
-    cursor = rhnSQL.prepare(query)
-    cursor.execute(pid=pid)
+    if isinstance(pid, list):
+        query = """
+        select  
+            rp.id as "package_id", 
+            rpn.name as "package_name",
+            rpe.version as "package_version",
+            rpe.release as "package_release",
+            rpe.epoch as "package_epoch",
+            rpa.label as "package_arch",
+            rc.label as "channel_label",
+            rc.id as "channel_id",
+            coalesce((select name from rhnpackageprovider rpp where rpp.id = rpk.provider_id),'Unknown') as "provider"
+        from rhnpackage rp
+            inner join rhnpackagename rpn on rpn.id = rp.name_id
+            inner join rhnpackageevr rpe on rpe.id = rp.evr_id
+            inner join rhnpackagearch rpa on rpa.id = rp.package_arch_id
+            left outer join rhnchannelpackage rcp on rcp.package_id = rp.id
+            left outer join rhnchannel rc on rc.id = rcp.channel_id
+            left outer join rhnpackagekeyassociation rpka on rpka.package_id = rp.id
+            left outer join rhnpackagekey rpk on rpk.id = rpka.key_id
+        where rp.id in (:pid)
+        order by 2, 3
+        """
+        cursor = rhnSQL.prepare(query)
+        cursor.execute(pid=','.join(pid))
+    else:
+        query = """
+        select  
+            rp.id as "package_id", 
+            rpn.name as "package_name",
+            rpe.version as "package_version",
+            rpe.release as "package_release",
+            rpe.epoch as "package_epoch",
+            rpa.label as "package_arch",
+            rc.label as "channel_label",
+            rc.id as "channel_id",
+            coalesce((select name from rhnpackageprovider rpp where rpp.id = rpk.provider_id),'Unknown') as "provider"
+        from rhnpackage rp
+            inner join rhnpackagename rpn on rpn.id = rp.name_id
+            inner join rhnpackageevr rpe on rpe.id = rp.evr_id
+            inner join rhnpackagearch rpa on rpa.id = rp.package_arch_id
+            left outer join rhnchannelpackage rcp on rcp.package_id = rp.id
+            left outer join rhnchannel rc on rc.id = rcp.channel_id
+            left outer join rhnpackagekeyassociation rpka on rpka.package_id = rp.id
+            left outer join rhnpackagekey rpk on rpk.id = rpka.key_id
+        where rp.id = :pid
+        order by 2, 3
+        """
+        cursor = rhnSQL.prepare(query)
+        cursor.execute(pid=pid)
     rows = cursor.fetchall_dict()
     print "backing up the list of packages"
     if not rows is None:
@@ -272,22 +297,37 @@ def db_clean(bkp, pid):
         bkp.save()
     rhnSQL.initDB()
     pids=[]
-    queryA = """
-    delete from rhnchannelpackage where package_id = :pid
-    """
-    queryB = """
-    delete from rhnpackage where id = :pid 
-    """
+    if isinstance(pid, list):
+        queryA = """
+        delete from rhnchannelpackage where package_id in (:pid)
+        """
+        queryB = """
+        delete from rhnpackage where id in (:pid)
+        """
+    else:
+        queryA = """
+        delete from rhnchannelpackage where package_id = :pid
+        """
+        queryB = """
+        delete from rhnpackage where id = :pid 
+        """
     answer = ask("Continue with the deletion of the entries?")
     if not answer :
         print "leaving..."
     else:
         try:
-            cursor = rhnSQL.prepare(queryA)
-            cursor.execute(pid=pid)
-            cursor = rhnSQL.prepare(queryB)
-            cursor.execute(pid=pid)
-            rhnSQL.commit()
+            if isinstance(pid, list):
+                cursor = rhnSQL.prepare(queryA)
+                cursor.execute(pid=','.join(pid))
+                cursor = rhnSQL.prepare(queryB)
+                cursor.execute(pid=','.join(pid))
+                rhnSQL.commit()
+            else:
+                cursor = rhnSQL.prepare(queryA)
+                cursor.execute(pid=pid)
+                cursor = rhnSQL.prepare(queryB)
+                cursor.execute(pid=pid)
+                rhnSQL.commit()
         except:
             rhnSQL.rollback()
             raise
@@ -439,7 +479,6 @@ def api_restore(bkp, conn):
                         pkgmatches = conn.client.packages.findByNvrea(conn.key, infos['name'], infos['version'], infos['release'], infos['epoch'], infos['arch'])
                 except:
                     raise
-                pass
             for match in pkgmatches:
                 if match['provider'] == "Red Hat Inc.":
                     #if this is the correct provider
