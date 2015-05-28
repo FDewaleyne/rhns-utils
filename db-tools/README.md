@@ -21,4 +21,4 @@ This script is dangerous - it exports the channel relations of a package then ca
 
 ---
 **rhns-package-infos.py**
-This script outputs information related to a package given in argument through `--packageid`.
+This script outputs information related to a package given in argument through `--packageid`. [More information on this script is available on the wiki](https://github.com/FDewaleyne/rhns-utils/wiki/rhns-package-infos)
