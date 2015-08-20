@@ -7,6 +7,7 @@
 # This allows to have full clones along with spacewalk-clone-by-date
 #
 ###
+# pylint: disable = line-too-long
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
@@ -62,7 +63,6 @@ def copy_into_channel(conn, channel, packages):
         conn.client.channel.software.addPackages(conn.key, channel, packages)
     else:
         print "all packages already in the channel"
-    pass
 
 def get_ids(conn, channel, startdate=None, enddate=None):
     """returns the list of packages that have no errata."""
