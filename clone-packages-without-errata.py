@@ -59,7 +59,7 @@ def copy_into_channel(conn,channel,packages):
             packages.remove(package['id'])
     if len(packages) > 0:
         print "Adding "+str(len(packages))+" packages to "+channel
-        conn.client.software.channel.addPackages(conn.key,channel,packages)
+        conn.client.channel.software.addPackages(conn.key,channel,packages)
     else:
         print "all packages already in the channel"
     pass
@@ -68,7 +68,7 @@ def get_ids(conn,channel,startdate=None,enddate=None):
     """returns the list of packages that have no errata."""
     if not startdate == None and not enddate == None:
         content = conn.client.channel.software.listAllPackages(conn.key,channel,startdate,enddate)
-    elif enddate == None:
+    elif enddate == None and not startdate == None:
         content = conn.client.channel.software.listAllPackages(conn.key,channel,startdate)
     else:
         content = conn.client.channel.software.listAllPackages(conn.key,channel)
