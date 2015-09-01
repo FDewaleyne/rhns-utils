@@ -11,10 +11,10 @@
 __author__ = "Felix Dewaleyne"
 __credits__ = ["Felix Dewaleyne"]
 __license__ = "GPL"
-__version__ = "0.1"
+__version__ = "0.2"
 __maintainer__ = "Felix Dewaleyne"
 __email__ = "fdewaley@redhat.com"
-__status__ = "dev"
+__status__ = "test"
 
 
 import xmlrpclib, sys, getpass, csv
@@ -51,9 +51,9 @@ def extract_sysgroup(sysgroup):
         try:
             relevant_errata_count = len(client.system.getRelevantErrata(key, system['id']))
             unscheduled_errata_count = len(client.system.getUnscheduledErrata(key, system['id']))
-            rhn_data[system['id']].update(['relevant_erratas': str(relevant_errata_count), 'unscheduled_erratas': str(unscheduled_errata_count) ])
+            rhn_data[system['id']].update({'relevant_erratas': str(relevant_errata_count), 'unscheduled_erratas': str(unscheduled_errata_count) })
         except:
-            rhn_data[system['id']].update(['relevant_erratas': 'NA', 'unscheduled_erratas': 'NA' ])
+            rhn_data[system['id']].update({'relevant_erratas': 'NA', 'unscheduled_erratas': 'NA' })
 
     #now write the csv file
     print "Writing data to the csv file"
