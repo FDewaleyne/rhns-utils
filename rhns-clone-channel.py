@@ -5,9 +5,9 @@
 ### warning experimental script ###
 
 ##### EDIT THOSE VALUES FOLLOWING YOUR NEEDS #####
-SATELLITE="rhns56-6.gsslab.fab.redhat.com"
+SATELLITE="satellite.example.com"
 USER="satadmin"
-PWD="redhat"
+PWD="password"
 #for each entry in action we will do one run of the cloning
 #channel to copy from, label only
 actions = list()
